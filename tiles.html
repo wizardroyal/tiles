@@ -116,6 +116,7 @@
       },
       // Add more questions here
     ];
+    let firstTile = null; // To store the first selected tile for swapping
 
     // Start the game
     function startGame() {
@@ -124,26 +125,58 @@
       askQuestion();
     }
 
-    // Create the board with tiles
+    // Create the board with tiles ensuring no initial matches
     function createBoard() {
       const gameBoard = document.getElementById('game-board');
       gameBoard.innerHTML = '';
       
-      for (let i = 0; i < gridSize * gridSize; i++) {
-        const tile = document.createElement('div');
-        tile.classList.add('tile');
-        tile.dataset.index = i;
-        tile.style.backgroundColor = getRandomColor(); // Set random color for each tile
-        tile.addEventListener('click', () => handleTileClick(i));
-        gameBoard.appendChild(tile);
-        tiles.push(tile);
-      }
+      // Generate a random grid of tiles
+      do {
+        tiles = [];
+        for (let i = 0; i < gridSize * gridSize; i++) {
+          const tile = document.createElement('div');
+          tile.classList.add('tile');
+          tile.dataset.index = i;
+          tile.style.backgroundColor = getRandomColor(); // Set random color for each tile
+          tile.addEventListener('click', () => handleTileClick(i));
+          gameBoard.appendChild(tile);
+          tiles.push(tile);
+        }
+      } while (checkForMatches());
     }
 
     // Get a random color for the tiles
     function getRandomColor() {
       const colors = ['#FF5733', '#33FF57', '#3357FF', '#F1C40F', '#9B59B6'];
       return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    // Check if there are any initial matches of 3 or more tiles
+    function checkForMatches() {
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize - 2; x++) {
+          const color = getTileColor(x, y);
+          if (color === getTileColor(x + 1, y) && color === getTileColor(x + 2, y)) {
+            return true;
+          }
+        }
+      }
+
+      for (let x = 0; x < gridSize; x++) {
+        for (let y = 0; y < gridSize - 2; y++) {
+          const color = getTileColor(x, y);
+          if (color === getTileColor(x, y + 1) && color === getTileColor(x, y + 2)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
+    // Helper function to get tile color by its coordinates
+    function getTileColor(x, y) {
+      return tiles[y * gridSize + x].style.backgroundColor;
     }
 
     // Start global timer
@@ -195,33 +228,36 @@
       }, 1000);
     }
 
-    // Handle tile click (for demo purposes)
+    // Handle tile click for swapping
     function handleTileClick(index) {
-      // Simulate a match-3 logic by triggering a question on any click
-      document.getElementById('question-container').classList.remove('hidden');
+      if (!firstTile) {
+        firstTile = index;
+      } else {
+        const secondTile = index;
+        swapTiles(firstTile, secondTile);
+        firstTile = null;
+      }
     }
 
-    // Check the answer and update scores
-    function checkAnswer(selectedIndex) {
-      const question = questions[currentQuestionIndex];
-      
-      if (selectedIndex === question.answer) {
+    // Swap two tiles and check for matches
+    function swapTiles(firstIndex, secondIndex) {
+      const firstTile = tiles[firstIndex];
+      const secondTile = tiles[secondIndex];
+      const tempColor = firstTile.style.backgroundColor;
+      firstTile.style.backgroundColor = secondTile.style.backgroundColor;
+      secondTile.style.backgroundColor = tempColor;
+
+      if (checkForMatches()) {
+        // If match is found, remove matched tiles and score points
         score += 10;
-        correctAnswers++;
+        updateScoreboard();
+        // Need to handle tile removal and refilling the board here
       } else {
-        incorrectAnswers++;
-      }
-      
-      updateScoreboard();
-      currentQuestionIndex++;
-      questionTimer = 10;
-      document.getElementById('question-container').classList.add('hidden');
-      
-      // Check if all questions have been answered
-      if (currentQuestionIndex < questions.length) {
-        setTimeout(askQuestion, 2000);
-      } else {
-        endGame();
+        // If no match, swap tiles back
+        setTimeout(() => {
+          firstTile.style.backgroundColor = tempColor;
+          secondTile.style.backgroundColor = tempColor;
+        }, 500);
       }
     }
 
@@ -263,14 +299,4 @@
       incorrectAnswers = 0;
       score = 0;
       gameTimer = 120;
-      currentQuestionIndex = 0;
-      questionTimer = 10;
-      updateScoreboard();
-      document.getElementById('end-game').classList.add('hidden');
-      startGame();
-    }
-
-    startGame();
-  </script>
-</body>
-</html>
+      current
