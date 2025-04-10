@@ -103,7 +103,10 @@
     let gameTimer = 120;
     let questionTimer = 10;
     let currentQuestionIndex = 0;
-    let questions = [
+    let firstTile = null; // To store the first selected tile for swapping
+
+    const colors = ['#FF5733', '#33FF57', '#3357FF', '#F1C40F', '#9B59B6'];
+    const questions = [
       {
         question: "What’s the capital of Brazil?",
         options: ["Rio de Janeiro", "São Paulo", "Brasília", "Salvador"],
@@ -116,7 +119,6 @@
       },
       // Add more questions here
     ];
-    let firstTile = null; // To store the first selected tile for swapping
 
     // Start the game
     function startGame() {
@@ -129,10 +131,10 @@
     function createBoard() {
       const gameBoard = document.getElementById('game-board');
       gameBoard.innerHTML = '';
-      
+      tiles = [];
+
       // Generate a random grid of tiles
       do {
-        tiles = [];
         for (let i = 0; i < gridSize * gridSize; i++) {
           const tile = document.createElement('div');
           tile.classList.add('tile');
@@ -147,7 +149,6 @@
 
     // Get a random color for the tiles
     function getRandomColor() {
-      const colors = ['#FF5733', '#33FF57', '#3357FF', '#F1C40F', '#9B59B6'];
       return colors[Math.floor(Math.random() * colors.length)];
     }
 
@@ -199,16 +200,16 @@
         endGame();
         return;
       }
-      
+
       const question = questions[currentQuestionIndex];
       const questionText = document.getElementById('question-text');
       const answerOptions = document.querySelectorAll('.answer-option');
-      
+
       questionText.textContent = question.question;
       answerOptions.forEach((button, index) => {
         button.textContent = question.options[index];
       });
-      
+
       document.getElementById('question-container').classList.remove('hidden');
       startQuestionTimer();
     }
@@ -216,7 +217,7 @@
     // Start the question timer
     function startQuestionTimer() {
       const questionTimerElement = document.getElementById('question-timer');
-      
+
       const interval = setInterval(() => {
         if (questionTimer <= 0) {
           clearInterval(interval);
@@ -251,7 +252,6 @@
         // If match is found, remove matched tiles and score points
         score += 10;
         updateScoreboard();
-        // Need to handle tile removal and refilling the board here
       } else {
         // If no match, swap tiles back
         setTimeout(() => {
@@ -275,7 +275,7 @@
       currentQuestionIndex++;
       questionTimer = 10;
       document.getElementById('question-container').classList.add('hidden');
-      
+
       if (currentQuestionIndex < questions.length) {
         setTimeout(askQuestion, 2000);
       } else {
@@ -285,18 +285,4 @@
 
     // End game, display results
     function endGame() {
-      const endMessage = correctAnswers >= 5 
-        ? "Congratulations, you passed!" 
-        : "Sorry, you didn't pass.";
-      
-      document.getElementById('end-message').textContent = endMessage;
-      document.getElementById('end-game').classList.remove('hidden');
-    }
-
-    // Restart the game
-    function restartGame() {
-      correctAnswers = 0;
-      incorrectAnswers = 0;
-      score = 0;
-      gameTimer = 120;
-      current
+      const endMessage = correctAnswers >= 5
