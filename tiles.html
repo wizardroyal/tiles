@@ -1,0 +1,159 @@
+const gridSize = 8;
+let tiles = [];
+let score = 0;
+let correctAnswers = 0;
+let incorrectAnswers = 0;
+let gameTimer = 120;
+let questionTimer = 10;
+let currentQuestionIndex = 0;
+let questions = [
+  {
+    question: "What’s the capital of Brazil?",
+    options: ["Rio de Janeiro", "São Paulo", "Brasília", "Salvador"],
+    answer: 2
+  },
+  {
+    question: "Which planet is known as the Red Planet?",
+    options: ["Earth", "Mars", "Jupiter", "Venus"],
+    answer: 1
+  },
+  // Add more questions here
+];
+
+function startGame() {
+  createBoard();
+  startGlobalTimer();
+  askQuestion();
+}
+
+function createBoard() {
+  const gameBoard = document.getElementById('game-board');
+  gameBoard.innerHTML = '';
+  
+  for (let i = 0; i < gridSize * gridSize; i++) {
+    const tile = document.createElement('div');
+    tile.classList.add('tile');
+    tile.dataset.index = i;
+    tile.addEventListener('click', () => handleTileClick(i));
+    gameBoard.appendChild(tile);
+    tiles.push(tile);
+  }
+}
+
+function startGlobalTimer() {
+  const globalTimerElement = document.getElementById('global-timer');
+  const interval = setInterval(() => {
+    if (gameTimer <= 0) {
+      clearInterval(interval);
+      endGame();
+    } else {
+      gameTimer--;
+      globalTimerElement.textContent = gameTimer;
+    }
+  }, 1000);
+}
+
+function askQuestion() {
+  if (currentQuestionIndex >= questions.length) {
+    endGame();
+    return;
+  }
+  
+  const question = questions[currentQuestionIndex];
+  const questionText = document.getElementById('question-text');
+  const answerOptions = document.querySelectorAll('.answer-option');
+  
+  questionText.textContent = question.question;
+  answerOptions.forEach((button, index) => {
+    button.textContent = question.options[index];
+  });
+  
+  document.getElementById('question-container').classList.remove('hidden');
+  startQuestionTimer();
+}
+
+function startQuestionTimer() {
+  const questionTimerElement = document.getElementById('question-timer');
+  
+  const interval = setInterval(() => {
+    if (questionTimer <= 0) {
+      clearInterval(interval);
+      handleIncorrectAnswer();
+    } else {
+      questionTimer--;
+      questionTimerElement.textContent = questionTimer;
+    }
+  }, 1000);
+}
+
+function handleTileClick(index) {
+  // Check for match-3 and trigger question
+  // For simplicity, consider any click triggers a question for now
+  document.getElementById('question-container').classList.remove('hidden');
+}
+
+function checkAnswer(selectedIndex) {
+  const question = questions[currentQuestionIndex];
+  
+  if (selectedIndex === question.answer) {
+    score += 10;
+    correctAnswers++;
+  } else {
+    incorrectAnswers++;
+  }
+  
+  updateScoreboard();
+  currentQuestionIndex++;
+  questionTimer = 10;
+  document.getElementById('question-container').classList.add('hidden');
+  
+  // Check if all questions have been answered
+  if (currentQuestionIndex < questions.length) {
+    setTimeout(askQuestion, 2000);
+  } else {
+    endGame();
+  }
+}
+
+function updateScoreboard() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('correct-answers').textContent = correctAnswers;
+  document.getElementById('incorrect-answers').textContent = incorrectAnswers;
+}
+
+function handleIncorrectAnswer() {
+  incorrectAnswers++;
+  updateScoreboard();
+  currentQuestionIndex++;
+  questionTimer = 10;
+  document.getElementById('question-container').classList.add('hidden');
+  
+  if (currentQuestionIndex < questions.length) {
+    setTimeout(askQuestion, 2000);
+  } else {
+    endGame();
+  }
+}
+
+function endGame() {
+  const endMessage = correctAnswers >= 5 
+    ? "Congratulations, you passed!" 
+    : "Sorry, you didn't pass.";
+  
+  document.getElementById('end-message').textContent = endMessage;
+  document.getElementById('end-game').classList.remove('hidden');
+}
+
+function restartGame() {
+  correctAnswers = 0;
+  incorrectAnswers = 0;
+  score = 0;
+  gameTimer = 120;
+  currentQuestionIndex = 0;
+  questionTimer = 10;
+  updateScoreboard();
+  document.getElementById('end-game').classList.add('hidden');
+  startGame();
+}
+
+startGame();
