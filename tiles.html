@@ -134,17 +134,15 @@
       tiles = [];
 
       // Generate a random grid of tiles
-      do {
-        for (let i = 0; i < gridSize * gridSize; i++) {
-          const tile = document.createElement('div');
-          tile.classList.add('tile');
-          tile.dataset.index = i;
-          tile.style.backgroundColor = getRandomColor(); // Set random color for each tile
-          tile.addEventListener('click', () => handleTileClick(i));
-          gameBoard.appendChild(tile);
-          tiles.push(tile);
-        }
-      } while (checkForMatches());
+      for (let i = 0; i < gridSize * gridSize; i++) {
+        const tile = document.createElement('div');
+        tile.classList.add('tile');
+        tile.dataset.index = i;
+        tile.style.backgroundColor = getRandomColor(); // Set random color for each tile
+        tile.addEventListener('click', () => handleTileClick(i));
+        gameBoard.appendChild(tile);
+        tiles.push(tile);
+      }
     }
 
     // Get a random color for the tiles
@@ -152,8 +150,48 @@
       return colors[Math.floor(Math.random() * colors.length)];
     }
 
-    // Check if there are any initial matches of 3 or more tiles
+    // Handle tile click for swapping
+    function handleTileClick(index) {
+      if (!firstTile) {
+        firstTile = index;
+        tiles[firstTile].classList.add('selected');
+      } else {
+        const secondTile = index;
+        swapTiles(firstTile, secondTile);
+        firstTile = null;
+        resetTileSelection();
+      }
+    }
+
+    // Reset tile selection (visual feedback)
+    function resetTileSelection() {
+      tiles.forEach(tile => tile.classList.remove('selected'));
+    }
+
+    // Swap two tiles and check for matches
+    function swapTiles(firstIndex, secondIndex) {
+      const firstTile = tiles[firstIndex];
+      const secondTile = tiles[secondIndex];
+      const tempColor = firstTile.style.backgroundColor;
+      firstTile.style.backgroundColor = secondTile.style.backgroundColor;
+      secondTile.style.backgroundColor = tempColor;
+
+      // Check if there's a match after swapping
+      if (!checkForMatches()) {
+        setTimeout(() => {
+          // If no match, swap tiles back
+          firstTile.style.backgroundColor = tempColor;
+          secondTile.style.backgroundColor = tempColor;
+        }, 500);
+      } else {
+        score += 10;
+        updateScoreboard();
+      }
+    }
+
+    // Check for matches in the grid
     function checkForMatches() {
+      // Check rows for matches of 3 or more
       for (let y = 0; y < gridSize; y++) {
         for (let x = 0; x < gridSize - 2; x++) {
           const color = getTileColor(x, y);
@@ -163,6 +201,7 @@
         }
       }
 
+      // Check columns for matches of 3 or more
       for (let x = 0; x < gridSize; x++) {
         for (let y = 0; y < gridSize - 2; y++) {
           const color = getTileColor(x, y);
@@ -178,6 +217,13 @@
     // Helper function to get tile color by its coordinates
     function getTileColor(x, y) {
       return tiles[y * gridSize + x].style.backgroundColor;
+    }
+
+    // Update scoreboard with current scores
+    function updateScoreboard() {
+      document.getElementById('score').textContent = score;
+      document.getElementById('correct-answers').textContent = correctAnswers;
+      document.getElementById('incorrect-answers').textContent = incorrectAnswers;
     }
 
     // Start global timer
@@ -229,45 +275,6 @@
       }, 1000);
     }
 
-    // Handle tile click for swapping
-    function handleTileClick(index) {
-      if (!firstTile) {
-        firstTile = index;
-      } else {
-        const secondTile = index;
-        swapTiles(firstTile, secondTile);
-        firstTile = null;
-      }
-    }
-
-    // Swap two tiles and check for matches
-    function swapTiles(firstIndex, secondIndex) {
-      const firstTile = tiles[firstIndex];
-      const secondTile = tiles[secondIndex];
-      const tempColor = firstTile.style.backgroundColor;
-      firstTile.style.backgroundColor = secondTile.style.backgroundColor;
-      secondTile.style.backgroundColor = tempColor;
-
-      if (checkForMatches()) {
-        // If match is found, remove matched tiles and score points
-        score += 10;
-        updateScoreboard();
-      } else {
-        // If no match, swap tiles back
-        setTimeout(() => {
-          firstTile.style.backgroundColor = tempColor;
-          secondTile.style.backgroundColor = tempColor;
-        }, 500);
-      }
-    }
-
-    // Update scoreboard with current scores
-    function updateScoreboard() {
-      document.getElementById('score').textContent = score;
-      document.getElementById('correct-answers').textContent = correctAnswers;
-      document.getElementById('incorrect-answers').textContent = incorrectAnswers;
-    }
-
     // Handle incorrect answer (timer runs out)
     function handleIncorrectAnswer() {
       incorrectAnswers++;
@@ -285,4 +292,4 @@
 
     // End game, display results
     function endGame() {
-      const endMessage = correctAnswers >= 5
+     
