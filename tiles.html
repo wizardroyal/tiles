@@ -1,159 +1,276 @@
-const gridSize = 8;
-let tiles = [];
-let score = 0;
-let correctAnswers = 0;
-let incorrectAnswers = 0;
-let gameTimer = 120;
-let questionTimer = 10;
-let currentQuestionIndex = 0;
-let questions = [
-  {
-    question: "What’s the capital of Brazil?",
-    options: ["Rio de Janeiro", "São Paulo", "Brasília", "Salvador"],
-    answer: 2
-  },
-  {
-    question: "Which planet is known as the Red Planet?",
-    options: ["Earth", "Mars", "Jupiter", "Venus"],
-    answer: 1
-  },
-  // Add more questions here
-];
-
-function startGame() {
-  createBoard();
-  startGlobalTimer();
-  askQuestion();
-}
-
-function createBoard() {
-  const gameBoard = document.getElementById('game-board');
-  gameBoard.innerHTML = '';
-  
-  for (let i = 0; i < gridSize * gridSize; i++) {
-    const tile = document.createElement('div');
-    tile.classList.add('tile');
-    tile.dataset.index = i;
-    tile.addEventListener('click', () => handleTileClick(i));
-    gameBoard.appendChild(tile);
-    tiles.push(tile);
-  }
-}
-
-function startGlobalTimer() {
-  const globalTimerElement = document.getElementById('global-timer');
-  const interval = setInterval(() => {
-    if (gameTimer <= 0) {
-      clearInterval(interval);
-      endGame();
-    } else {
-      gameTimer--;
-      globalTimerElement.textContent = gameTimer;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Match-3 Quiz Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
     }
-  }, 1000);
-}
 
-function askQuestion() {
-  if (currentQuestionIndex >= questions.length) {
-    endGame();
-    return;
-  }
-  
-  const question = questions[currentQuestionIndex];
-  const questionText = document.getElementById('question-text');
-  const answerOptions = document.querySelectorAll('.answer-option');
-  
-  questionText.textContent = question.question;
-  answerOptions.forEach((button, index) => {
-    button.textContent = question.options[index];
-  });
-  
-  document.getElementById('question-container').classList.remove('hidden');
-  startQuestionTimer();
-}
-
-function startQuestionTimer() {
-  const questionTimerElement = document.getElementById('question-timer');
-  
-  const interval = setInterval(() => {
-    if (questionTimer <= 0) {
-      clearInterval(interval);
-      handleIncorrectAnswer();
-    } else {
-      questionTimer--;
-      questionTimerElement.textContent = questionTimer;
+    .game-container {
+      text-align: center;
+      width: 600px;
+      position: relative;
     }
-  }, 1000);
-}
 
-function handleTileClick(index) {
-  // Check for match-3 and trigger question
-  // For simplicity, consider any click triggers a question for now
-  document.getElementById('question-container').classList.remove('hidden');
-}
+    #scoreboard {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
 
-function checkAnswer(selectedIndex) {
-  const question = questions[currentQuestionIndex];
-  
-  if (selectedIndex === question.answer) {
-    score += 10;
-    correctAnswers++;
-  } else {
-    incorrectAnswers++;
-  }
-  
-  updateScoreboard();
-  currentQuestionIndex++;
-  questionTimer = 10;
-  document.getElementById('question-container').classList.add('hidden');
-  
-  // Check if all questions have been answered
-  if (currentQuestionIndex < questions.length) {
-    setTimeout(askQuestion, 2000);
-  } else {
-    endGame();
-  }
-}
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-gap: 5px;
+      margin-bottom: 20px;
+    }
 
-function updateScoreboard() {
-  document.getElementById('score').textContent = score;
-  document.getElementById('correct-answers').textContent = correctAnswers;
-  document.getElementById('incorrect-answers').textContent = incorrectAnswers;
-}
+    .tile {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      background-color: #7e7e7e;
+      transition: transform 0.3s;
+      cursor: pointer;
+    }
 
-function handleIncorrectAnswer() {
-  incorrectAnswers++;
-  updateScoreboard();
-  currentQuestionIndex++;
-  questionTimer = 10;
-  document.getElementById('question-container').classList.add('hidden');
-  
-  if (currentQuestionIndex < questions.length) {
-    setTimeout(askQuestion, 2000);
-  } else {
-    endGame();
-  }
-}
+    .tile.matched {
+      transform: scale(1.2);
+      background-color: #ffcc00;
+    }
 
-function endGame() {
-  const endMessage = correctAnswers >= 5 
-    ? "Congratulations, you passed!" 
-    : "Sorry, you didn't pass.";
-  
-  document.getElementById('end-message').textContent = endMessage;
-  document.getElementById('end-game').classList.remove('hidden');
-}
+    #question-container {
+      display: none;
+      margin-top: 20px;
+    }
 
-function restartGame() {
-  correctAnswers = 0;
-  incorrectAnswers = 0;
-  score = 0;
-  gameTimer = 120;
-  currentQuestionIndex = 0;
-  questionTimer = 10;
-  updateScoreboard();
-  document.getElementById('end-game').classList.add('hidden');
-  startGame();
-}
+    .hidden {
+      display: none;
+    }
 
-startGame();
+    #answer-options button {
+      margin: 5px;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #end-game {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-container">
+    <div id="scoreboard">
+      <p>Time Left: <span id="global-timer">120</span> seconds</p>
+      <p>Correct Answers: <span id="correct-answers">0</span></p>
+      <p>Incorrect Answers: <span id="incorrect-answers">0</span></p>
+      <p>Score: <span id="score">0</span></p>
+    </div>
+    <div id="game-board"></div>
+    <div id="question-container" class="hidden">
+      <p id="question-text"></p>
+      <div id="answer-options">
+        <button class="answer-option" onclick="checkAnswer(0)"></button>
+        <button class="answer-option" onclick="checkAnswer(1)"></button>
+        <button class="answer-option" onclick="checkAnswer(2)"></button>
+        <button class="answer-option" onclick="checkAnswer(3)"></button>
+      </div>
+      <p>Time left to answer: <span id="question-timer">10</span> seconds</p>
+    </div>
+    <div id="end-game" class="hidden">
+      <p id="end-message"></p>
+      <button onclick="restartGame()">Restart</button>
+    </div>
+  </div>
+
+  <script>
+    const gridSize = 8;
+    let tiles = [];
+    let score = 0;
+    let correctAnswers = 0;
+    let incorrectAnswers = 0;
+    let gameTimer = 120;
+    let questionTimer = 10;
+    let currentQuestionIndex = 0;
+    let questions = [
+      {
+        question: "What’s the capital of Brazil?",
+        options: ["Rio de Janeiro", "São Paulo", "Brasília", "Salvador"],
+        answer: 2
+      },
+      {
+        question: "Which planet is known as the Red Planet?",
+        options: ["Earth", "Mars", "Jupiter", "Venus"],
+        answer: 1
+      },
+      // Add more questions here
+    ];
+
+    // Start the game
+    function startGame() {
+      createBoard();
+      startGlobalTimer();
+      askQuestion();
+    }
+
+    // Create the board with tiles
+    function createBoard() {
+      const gameBoard = document.getElementById('game-board');
+      gameBoard.innerHTML = '';
+      
+      for (let i = 0; i < gridSize * gridSize; i++) {
+        const tile = document.createElement('div');
+        tile.classList.add('tile');
+        tile.dataset.index = i;
+        tile.style.backgroundColor = getRandomColor(); // Set random color for each tile
+        tile.addEventListener('click', () => handleTileClick(i));
+        gameBoard.appendChild(tile);
+        tiles.push(tile);
+      }
+    }
+
+    // Get a random color for the tiles
+    function getRandomColor() {
+      const colors = ['#FF5733', '#33FF57', '#3357FF', '#F1C40F', '#9B59B6'];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    // Start global timer
+    function startGlobalTimer() {
+      const globalTimerElement = document.getElementById('global-timer');
+      const interval = setInterval(() => {
+        if (gameTimer <= 0) {
+          clearInterval(interval);
+          endGame();
+        } else {
+          gameTimer--;
+          globalTimerElement.textContent = gameTimer;
+        }
+      }, 1000);
+    }
+
+    // Show quiz question and options
+    function askQuestion() {
+      if (currentQuestionIndex >= questions.length) {
+        endGame();
+        return;
+      }
+      
+      const question = questions[currentQuestionIndex];
+      const questionText = document.getElementById('question-text');
+      const answerOptions = document.querySelectorAll('.answer-option');
+      
+      questionText.textContent = question.question;
+      answerOptions.forEach((button, index) => {
+        button.textContent = question.options[index];
+      });
+      
+      document.getElementById('question-container').classList.remove('hidden');
+      startQuestionTimer();
+    }
+
+    // Start the question timer
+    function startQuestionTimer() {
+      const questionTimerElement = document.getElementById('question-timer');
+      
+      const interval = setInterval(() => {
+        if (questionTimer <= 0) {
+          clearInterval(interval);
+          handleIncorrectAnswer();
+        } else {
+          questionTimer--;
+          questionTimerElement.textContent = questionTimer;
+        }
+      }, 1000);
+    }
+
+    // Handle tile click (for demo purposes)
+    function handleTileClick(index) {
+      // Simulate a match-3 logic by triggering a question on any click
+      document.getElementById('question-container').classList.remove('hidden');
+    }
+
+    // Check the answer and update scores
+    function checkAnswer(selectedIndex) {
+      const question = questions[currentQuestionIndex];
+      
+      if (selectedIndex === question.answer) {
+        score += 10;
+        correctAnswers++;
+      } else {
+        incorrectAnswers++;
+      }
+      
+      updateScoreboard();
+      currentQuestionIndex++;
+      questionTimer = 10;
+      document.getElementById('question-container').classList.add('hidden');
+      
+      // Check if all questions have been answered
+      if (currentQuestionIndex < questions.length) {
+        setTimeout(askQuestion, 2000);
+      } else {
+        endGame();
+      }
+    }
+
+    // Update scoreboard with current scores
+    function updateScoreboard() {
+      document.getElementById('score').textContent = score;
+      document.getElementById('correct-answers').textContent = correctAnswers;
+      document.getElementById('incorrect-answers').textContent = incorrectAnswers;
+    }
+
+    // Handle incorrect answer (timer runs out)
+    function handleIncorrectAnswer() {
+      incorrectAnswers++;
+      updateScoreboard();
+      currentQuestionIndex++;
+      questionTimer = 10;
+      document.getElementById('question-container').classList.add('hidden');
+      
+      if (currentQuestionIndex < questions.length) {
+        setTimeout(askQuestion, 2000);
+      } else {
+        endGame();
+      }
+    }
+
+    // End game, display results
+    function endGame() {
+      const endMessage = correctAnswers >= 5 
+        ? "Congratulations, you passed!" 
+        : "Sorry, you didn't pass.";
+      
+      document.getElementById('end-message').textContent = endMessage;
+      document.getElementById('end-game').classList.remove('hidden');
+    }
+
+    // Restart the game
+    function restartGame() {
+      correctAnswers = 0;
+      incorrectAnswers = 0;
+      score = 0;
+      gameTimer = 120;
+      currentQuestionIndex = 0;
+      questionTimer = 10;
+      updateScoreboard();
+      document.getElementById('end-game').classList.add('hidden');
+      startGame();
+    }
+
+    startGame();
+  </script>
+</body>
+</html>
