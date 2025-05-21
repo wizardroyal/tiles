@@ -198,29 +198,36 @@
 
     // Load images
     const chefImage = new Image();
-    chefImage.src = "https://opengameart.org/sites/default/files/chef_sprite.png"; // Placeholder chef image
-    const bombImage = new Image();
-    bombImage.src = "https://opengameart.org/sites/default/files/bomb_sprite.png"; // Placeholder bomb image
+    chefImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/chef1.png";
+    const trashImage = new Image();
+    trashImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/trash.png";
 
     let imagesLoaded = 0;
     const totalImages = 2;
+    let imageLoadTimeout = null;
 
     function handleImageLoad() {
       imagesLoaded++;
+      console.log(`Image loaded. Total loaded: ${imagesLoaded}/${totalImages}`);
       if (imagesLoaded === totalImages) {
-        // Images loaded, ready to start game
-        console.log("All images loaded");
+        clearTimeout(imageLoadTimeout);
+        console.log("All images loaded successfully");
       }
     }
 
     function handleImageError(e) {
-      console.warn("Image failed to load:", e.target.src, ". Using fallback rendering.");
+      imagesLoaded++;
+      console.warn(`Image failed to load: ${e.target.src}. Using fallback rendering. Total loaded: ${imagesLoaded}/${totalImages}`);
+      if (imagesLoaded === totalImages) {
+        clearTimeout(imageLoadTimeout);
+        console.log("Proceeding with fallback rendering");
+      }
     }
 
     chefImage.onload = handleImageLoad;
-    bombImage.onload = handleImageLoad;
+    trashImage.onload = handleImageLoad;
     chefImage.onerror = handleImageError;
-    bombImage.onerror = handleImageError;
+    trashImage.onerror = handleImageError;
 
     let correctQuestionsAnswered = 0;
     const totalQuestions = 20;
@@ -237,9 +244,9 @@
 
     const player = {
       x: 100,
-      y: 300,
-      width: 32, // Match chef image size
-      height: 32,
+      y: 340 - 48, // Base at y: 340, height 48
+      width: 48,
+      height: 48,
       vy: 0,
       gravity: 1,
       jumpStrength: -24,
@@ -248,8 +255,8 @@
         this.vy += this.gravity;
         this.y += this.vy;
 
-        if (this.y >= 300) {
-          this.y = 300;
+        if (this.y >= 340 - this.height) {
+          this.y = 340 - this.height;
           this.vy = 0;
           this.grounded = true;
         } else {
@@ -266,7 +273,6 @@
         if (chefImage.complete && chefImage.naturalWidth !== 0) {
           ctx.drawImage(chefImage, this.x, this.y, this.width, this.height);
         } else {
-          // Fallback to rectangle if image fails
           ctx.fillStyle = "#ff5722";
           ctx.fillRect(this.x, this.y, this.width, this.height);
         }
@@ -282,44 +288,188 @@
     }
 
     const questions = [
-      { q: "What is the capital of France?", options: ["Paris", "Rome", "Berlin", "Madrid"], answer: "Paris" },
-      { q: "What is 5 + 3?", options: ["8", "6", "9", "7"], answer: "8" },
-      { q: "Who painted the Mona Lisa?", options: ["Leonardo da Vinci", "Vincent van Gogh", "Pablo Picasso", "Claude Monet"], answer: "Leonardo da Vinci" },
-      { q: "What is the largest planet?", options: ["Jupiter", "Saturn", "Earth", "Mars"], answer: "Jupiter" },
-      { q: "Who wrote 'Romeo and Juliet'?", options: ["William Shakespeare", "Charles Dickens", "Jane Austen", "Mark Twain"], answer: "William Shakespeare" },
-      { q: "What is the square root of 16?", options: ["4", "8", "16", "2"], answer: "4" },
-      { q: "Which gas do plants absorb from the air?", options: ["Carbon dioxide", "Oxygen", "Nitrogen", "Hydrogen"], answer: "Carbon dioxide" },
-      { q: "What is the boiling point of water?", options: ["100°C", "90°C", "110°C", "120°C"], answer: "100°C" },
-      { q: "What is the capital of Japan?", options: ["Tokyo", "Seoul", "Beijing", "Bangkok"], answer: "Tokyo" },
-      { q: "What is the hardest natural substance?", options: ["Diamond", "Gold", "Iron", "Platinum"], answer: "Diamond" },
-      { q: "What is 12 × 4?", options: ["48", "36", "52", "44"], answer: "48" },
-      { q: "Which element has the chemical symbol 'O'?", options: ["Oxygen", "Gold", "Iron", "Osmium"], answer: "Oxygen" },
-      { q: "Who discovered gravity?", options: ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Nikola Tesla"], answer: "Isaac Newton" },
-      { q: "What is the capital of Brazil?", options: ["Brasilia", "Rio de Janeiro", "São Paulo", "Salvador"], answer: "Brasilia" },
-      { q: "What is the smallest prime number?", options: ["2", "1", "3", "5"], answer: "2" },
-      { q: "Which planet is known as the Red Planet?", options: ["Mars", "Venus", "Mercury", "Jupiter"], answer: "Mars" },
-      { q: "Who wrote 'Pride and Prejudice'?", options: ["Jane Austen", "Emily Brontë", "Charlotte Brontë", "Virginia Woolf"], answer: "Jane Austen" },
-      { q: "What is the chemical formula for water?", options: ["H₂O", "CO₂", "O₂", "HCl"], answer: "H₂O" },
-      { q: "What is the capital of Australia?", options: ["Canberra", "Sydney", "Melbourne", "Brisbane"], answer: "Canberra" },
-      { q: "What is 7²?", options: ["49", "42", "56", "35"], answer: "49" }
+      {
+        q: "What does RFIE stand for?",
+        options: [
+          "Realtime Fluent In Ethereum",
+          "Remove Friction In Ethereum",
+          "Reduce Friction Increase Expressivity",
+          "Reduce Friction Improve Ethereum"
+        ],
+        answer: "Reduce Friction Increase Expressivity"
+      },
+      {
+        q: "Who among these is not a part of Fluent's team?",
+        options: ["Blendino", "Nunes Yangher", "Dmitry Savonin", "zkElliot"],
+        answer: "Nunes Yangher"
+      },
+      {
+        q: "In which month was the first BBC app announced?",
+        options: ["January", "Not Yet", "March", "April"],
+        answer: "April"
+      },
+      {
+        q: "What is rWasm?",
+        options: [
+          "New programming language for Ethereum",
+          "Reduced Wasm optimized for ZK proving",
+          "Consensus algorithm for L2s",
+          "Database for blockchain transactions"
+        ],
+        answer: "Reduced Wasm optimized for ZK proving"
+      },
+      {
+        q: "What is the BBC?",
+        options: [
+          "Big Black Chicken",
+          "Blendino Boys Club",
+          "Blended Builders Club",
+          "Bera Baddies Company"
+        ],
+        answer: "Blended Builders Club"
+      },
+      {
+        q: "Who is Cult Chef on X?",
+        options: ["Toghrul Maharram", "Miss Chicken Nuggets Toes", "Nairolf", "Blendino"],
+        answer: "Nairolf"
+      },
+      {
+        q: "How of these is an optimization method used by Fluent?",
+        options: ["Sequential execution", "Local Fee markets", "ZK-Tempering", "Global Fee market making"],
+        answer: "Local Fee markets"
+      },
+      {
+        q: "Which of these is true of Fluent's VM?",
+        options: [
+          "Uses just-in-time compilers to translate code to rWasm",
+          "Only supports Solidity programming",
+          "Requires devs to learn a new language",
+          "Eliminates need for ZK-Proofs"
+        ],
+        answer: "Uses just-in-time compilers to translate code to rWasm"
+      },
+      {
+        q: "What is the handle for Fluent’s official X account?",
+        options: ["@FluentLabs", "@FluentEthereum", "@fluentxyz", "@zkWasm"],
+        answer: "@fluentxyz"
+      },
+      {
+        q: "Which programming languages are supported by Fluent?",
+        options: [
+          "Only Solidity",
+          "Rust, TypeScript, Solidity, and more",
+          "Only JavaScript",
+          "Python and C++ exclusively"
+        ],
+        answer: "Rust, TypeScript, Solidity, and more"
+      },
+      {
+        q: "What does Fluent’s framework allow developers to do?",
+        options: [
+          "Build apps on Bitcoin",
+          "Build apps that use smart contracts from multiple VMs",
+          "Mine Ethereum tokens",
+          "Deploy centralized applications"
+        ],
+        answer: "Build apps that use smart contracts from multiple VMs"
+      },
+      {
+        q: "How does Fluent aim to onboard more devs into Web3?",
+        options: [
+          "Teach them new programming languages",
+          "Give them grants to build dApps",
+          "Focusing only on novice devs",
+          "Allowing them use familiar tools to build dApps"
+        ],
+        answer: "Allowing them use familiar tools to build dApps"
+      },
+      {
+        q: "Which of these captures Fluent’s mission?",
+        options: [
+          "Create a new cryptocurrency",
+          "Enable devs build apps in any language on Ethereum",
+          "Help devs create blended sandboxes",
+          "Make L3s expressive"
+        ],
+        answer: "Enable devs build apps in any language on Ethereum"
+      },
+      {
+        q: "What is a benefit of Fluent’s rWasm over standard Wasm?",
+        options: [
+          "Increases binary size",
+          "Simplifies ZK proving",
+          "Modifies the EVM",
+          "Eliminate programming errors"
+        ],
+        answer: "Simplifies ZK proving"
+      },
+      {
+        q: "Which of these best describes blended execution?",
+        options: [
+          "One app, multiple chains",
+          "A toolbox for building any app",
+          "Chain abstraction",
+          "One execution environment, multiple VMs"
+        ],
+        answer: "One execution environment, multiple VMs"
+      },
+      {
+        q: "What is blend.fun on Fluent?",
+        options: [
+          "No such thing",
+          "App to launch memecoins on Fluent",
+          "Tool to help devs convert their ideas to apps",
+          "App for web2 artists to earn from drawing contests"
+        ],
+        answer: "No such thing"
+      },
+      {
+        q: "PumpPals is building a ____ economy?",
+        options: ["GoonFi", "DeFi", "InfoFi", "BlendFi"],
+        answer: "GoonFi"
+      },
+      {
+        q: "Match the tweet to Blendino",
+        options: [
+          "Partner with chains who push infra to the forefront",
+          "Apps > Yaps",
+          "BlendFi enables expressivity",
+          "After expressivity comes TPS"
+        ],
+        answer: "Apps > Yaps"
+      },
+      {
+        q: "Which of these best describes Expressivity?",
+        options: [
+          "Ability of blockchains to process transactions in real-time",
+          "Freedom devs have to build apps as they want, with familiar tools",
+          "Ability of devs to build apps that calls different contracts",
+          "Freedom devs have to build web2 apps onchain"
+        ],
+        answer: "Freedom devs have to build apps as they want, with familiar tools"
+      },
+      {
+        q: "Which of these is not a Contributory role in Fluent Discord?",
+        options: ["Blended Chef", "Meme Chef", "Content Chef", "Artist Chef"],
+        answer: "Blended Chef"
+      }
     ];
 
     function spawnObstacle() {
       obstacle = {
         x: canvas.width,
-        y: 320,
-        width: 32, // Match bomb image size
-        height: 32
+        y: 340 - 48, // Base at y: 340, height 48
+        width: 48,
+        height: 48
       };
       obstacleHandled = false; // Reset for new obstacle
     }
 
     function drawObstacle() {
       if (!obstacle) return;
-      if (bombImage.complete && bombImage.naturalWidth !== 0) {
-        ctx.drawImage(bombImage, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      if (trashImage.complete && trashImage.naturalWidth !== 0) {
+        ctx.drawImage(trashImage, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
       } else {
-        // Fallback to rectangle if image fails
         ctx.fillStyle = "#555";
         ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
       }
@@ -376,31 +526,41 @@
       questionBox.style.display = "none";
       optionsContainer.innerHTML = "";
       clearTimeout(questionTimer);
+      clearTimeout(imageLoadTimeout);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
     function startGame() {
       try {
-        if (imagesLoaded < totalImages) {
-          console.warn("Waiting for images to load...");
+        if (imagesLoaded < totalImages && !imageLoadTimeout) {
+          console.warn(`Waiting for images to load... (${imagesLoaded}/${totalImages})`);
+          imageLoadTimeout = setTimeout(() => {
+            console.warn("Image loading timeout. Starting game with fallbacks.");
+            proceedWithGameStart();
+          }, 5000); // 5-second timeout
           setTimeout(startGame, 100); // Retry after 100ms
           return;
         }
-        gameRunning = true;
-        lives = 4;
-        correctQuestionsAnswered = 0;
-        currentQuestionIndex = -1;
-        obstacleSpeed = 2.5; // Initialize speed
-        shuffledQuestions = shuffleArray([...questions]);
-        document.getElementById("score").textContent = `0/${totalQuestions}`;
-        document.getElementById("lives").textContent = lives;
-        document.getElementById("start-screen").style.display = "none";
-        spawnNextObstacleWithQuestion();
-        requestAnimationFrame(gameLoop);
+        proceedWithGameStart();
       } catch (error) {
         console.error("Error starting game:", error);
         alert("Failed to start the game. Please check the console for details.");
       }
+    }
+
+    function proceedWithGameStart() {
+      clearTimeout(imageLoadTimeout);
+      gameRunning = true;
+      lives = 4;
+      correctQuestionsAnswered = 0;
+      currentQuestionIndex = -1;
+      obstacleSpeed = 2.5; // Initialize speed
+      shuffledQuestions = shuffleArray([...questions]);
+      document.getElementById("score").textContent = `0/${totalQuestions}`;
+      document.getElementById("lives").textContent = lives;
+      document.getElementById("start-screen").style.display = "none";
+      spawnNextObstacleWithQuestion();
+      requestAnimationFrame(gameLoop);
     }
 
     function getQuestionTimeout() {
