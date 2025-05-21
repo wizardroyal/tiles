@@ -5,12 +5,165 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Quiz Runner</title>
   <style>
-    /* [Same styling from your current code, unchanged for consistency] */
-    .correct {
-      background-color: green !important;
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f8ff;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
-    .incorrect {
-      background-color: red !important;
+
+    #gameCanvas {
+      display: block;
+      background: linear-gradient(to top, #87ceeb, #ffffff);
+      border: 5px solid #4CAF50;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    #question-box {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 12px;
+      padding: 10px 15px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      max-width: 80%;
+      display: none;
+    }
+
+    #question-box h3 {
+      font-size: 20px;
+      color: #333;
+      margin: 0 0 15px;
+    }
+
+    #options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .option {
+      padding: 12px 24px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.1s;
+      text-align: center;
+    }
+
+    .option:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+
+    .option.correct {
+      background-color: #2ecc71 !important; /* Green for correct answer */
+    }
+
+    .option.incorrect {
+      background-color: #e74c3c !important; /* Red for incorrect answer */
+    }
+
+    #scoreboard {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      text-align: left;
+      font-size: 18px;
+      color: #333;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 12px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #game-over-box {
+      text-align: center;
+      display: none;
+      padding: 25px;
+      background: #fff;
+      border: 2px solid #444;
+      border-radius: 15px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    }
+
+    #game-over-image {
+      max-width: 500px; /* Larger image */
+      width: 100%;
+      height: auto;
+      margin: 10px auto;
+      display: block;
+    }
+
+    .btn {
+      padding: 14px 28px;
+      font-size: 18px;
+      margin-top: 20px;
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      background-color: #4CAF50;
+      color: white;
+      transition: background-color 0.3s ease, transform 0.1s ease;
+    }
+
+    .btn:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+
+    #start-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f7f7f7;
+      z-index: 999;
+    }
+
+    .start-content {
+      text-align: center;
+      background: #ffffffb3;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .start-content h1 {
+      margin-bottom: 20px;
+      font-size: 36px;
+      color: #333;
+    }
+
+    .start-content button {
+      padding: 15px 30px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .start-content button:hover {
+      background-color: #45a049;
     }
   </style>
 </head>
@@ -21,7 +174,7 @@
     <div id="options"></div>
   </div>
   <div id="scoreboard">
-    Score: <span id="score">0</span><br>
+    Score: <span id="score">0/20</span><br>
     Lives: <span id="lives">4</span>
   </div>
   <div id="start-screen">
@@ -32,9 +185,9 @@
   </div>
   <div id="game-over-box">
     <h2 id="game-over-title">Game Over!</h2>
-    <p id="game-over-message"></p>
+    <img id="game-over-image" src="" alt="Game Over Image"/>
     <p>Your score: <span id="final-score"></span></p>
-    <button class="btn" onclick="location.reload()">Reblend</button>
+    <button class="btn" onclick="resetGame()">ReBlend</button>
   </div>
   <script>
     const canvas = document.getElementById("gameCanvas");
@@ -43,22 +196,50 @@
     const questionText = document.getElementById("question-text");
     const optionsContainer = document.getElementById("options");
 
-    let score = 0;
+    // Load images
+    const chefImage = new Image();
+    chefImage.src = "https://opengameart.org/sites/default/files/chef_sprite.png"; // Placeholder chef image
+    const bombImage = new Image();
+    bombImage.src = "https://opengameart.org/sites/default/files/bomb_sprite.png"; // Placeholder bomb image
+
+    let imagesLoaded = 0;
+    const totalImages = 2;
+
+    function handleImageLoad() {
+      imagesLoaded++;
+      if (imagesLoaded === totalImages) {
+        // Images loaded, ready to start game
+        console.log("All images loaded");
+      }
+    }
+
+    function handleImageError(e) {
+      console.warn("Image failed to load:", e.target.src, ". Using fallback rendering.");
+    }
+
+    chefImage.onload = handleImageLoad;
+    bombImage.onload = handleImageLoad;
+    chefImage.onerror = handleImageError;
+    bombImage.onerror = handleImageError;
+
+    let correctQuestionsAnswered = 0;
+    const totalQuestions = 20;
     let lives = 4;
     let gameRunning = false;
     let currentQuestionIndex = -1;
-    let currentBatch = 0;
-    let questionTimer = null;
-    let questionAnswered = false;
     let obstacle = null;
+    let questionAnswered = false;
+    let questionTimer = null;
     let obstacleHandled = false;
-    let obstacleSpeed = 2.5;
+    let obstacleSpeed = 2.5; // Initial speed
+    let lastAnswerCorrect = false;
+    let shuffledQuestions = [];
 
     const player = {
       x: 100,
       y: 300,
-      width: 40,
-      height: 40,
+      width: 32, // Match chef image size
+      height: 32,
       vy: 0,
       gravity: 1,
       jumpStrength: -24,
@@ -66,6 +247,7 @@
       update() {
         this.vy += this.gravity;
         this.y += this.vy;
+
         if (this.y >= 300) {
           this.y = 300;
           this.vy = 0;
@@ -81,158 +263,22 @@
         }
       },
       draw() {
-        ctx.fillStyle = "#ff5722";
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        if (chefImage.complete && chefImage.naturalWidth !== 0) {
+          ctx.drawImage(chefImage, this.x, this.y, this.width, this.height);
+        } else {
+          // Fallback to rectangle if image fails
+          ctx.fillStyle = "#ff5722";
+          ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
       }
     };
 
-    const questionDurations = [10000, 8000, 6000, 4000];
-    let shuffledQuestions = [];
-
-    function shuffle(array) {
+    function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
       }
       return array;
-    }
-
-    function startGame() {
-      gameRunning = true;
-      score = 0;
-      lives = 4;
-      document.getElementById("score").textContent = score;
-      document.getElementById("lives").textContent = lives;
-      document.getElementById("start-screen").style.display = "none";
-      shuffledQuestions = shuffle([...questions]).slice(0, 20);
-      currentQuestionIndex = -1;
-      currentBatch = 0;
-      spawnNextObstacleWithQuestion();
-      requestAnimationFrame(gameLoop);
-    }
-
-    function spawnObstacle() {
-      obstacle = {
-        x: canvas.width,
-        y: 320,
-        width: 40,
-        height: 80
-      };
-    }
-
-    function drawObstacle() {
-      if (!obstacle) return;
-      ctx.fillStyle = "#555";
-      ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-    }
-
-    function updateObstacle() {
-      if (!obstacle) return;
-      obstacle.x -= obstacleSpeed;
-      if (obstacle.x < player.x + player.width + 10 && !obstacleHandled && player.grounded) {
-        if (questionAnswered) {
-          if (lastAnswerCorrect) {
-            player.jump();
-          } else {
-            loseLife();
-          }
-          obstacleHandled = true;
-        }
-      }
-      if (obstacle && obstacle.x + obstacle.width < 0) {
-        obstacle = null;
-      }
-    }
-
-    function loseLife() {
-      lives--;
-      document.getElementById("lives").textContent = lives;
-      if (lives <= 0) {
-        showGameOverMessage();
-      }
-    }
-
-    function showGameOverMessage() {
-      gameRunning = false;
-      document.getElementById("final-score").textContent = score;
-      const batch = Math.floor(currentQuestionIndex / 5);
-      let message = "";
-      switch (batch) {
-        case 0: message = "Hell no, Stay off our Streets"; break;
-        case 1: message = "Learner, don't drive too close to him"; break;
-        case 2: message = "Certified! License to Blend"; break;
-        case 3: message = "Experienced Blender! Been there, done that"; break;
-      }
-      document.getElementById("game-over-title").textContent = "Game Over!";
-      document.getElementById("game-over-message").textContent = message;
-      document.getElementById("game-over-box").style.display = "block";
-    }
-
-    function showVictoryMessage() {
-      gameRunning = false;
-      document.getElementById("final-score").textContent = score;
-      document.getElementById("game-over-title").innerHTML = "<span style='line-height:1.5;'>Wait a minute, Is that you Dmitry?<br>Dmitry?<br>Congrats driver, you're CERTIFIED!!! Licensed to Blend</span>";
-      document.getElementById("game-over-message").textContent = "";
-      document.getElementById("game-over-box").style.display = "block";
-    }
-
-    function checkAnswer(selected, correct, button) {
-      clearTimeout(questionTimer);
-      questionAnswered = true;
-
-      const allButtons = document.querySelectorAll(".option");
-      allButtons.forEach(btn => btn.disabled = true);
-
-      if (selected === correct) {
-        button.classList.add("correct");
-        score += 10;
-        document.getElementById("score").textContent = score;
-        lastAnswerCorrect = true;
-      } else {
-        button.classList.add("incorrect");
-        lastAnswerCorrect = false;
-      }
-
-      setTimeout(() => {
-        questionBox.style.display = "none";
-        if (currentQuestionIndex >= 19 && lives > 0) {
-          showVictoryMessage();
-        } else {
-          spawnNextObstacleWithQuestion();
-        }
-      }, 1000);
-    }
-
-    function showQuestion() {
-      const q = shuffledQuestions[++currentQuestionIndex];
-      currentBatch = Math.floor(currentQuestionIndex / 5);
-
-      questionBox.style.display = "block";
-      questionText.textContent = q.q;
-      optionsContainer.innerHTML = "";
-      questionAnswered = false;
-      obstacleHandled = false;
-
-      q.options.forEach(option => {
-        const button = document.createElement("button");
-        button.textContent = option;
-        button.classList.add("option");
-        button.addEventListener("click", () => checkAnswer(option, q.answer, button));
-        optionsContainer.appendChild(button);
-      });
-
-      questionTimer = setTimeout(() => {
-        if (!questionAnswered) {
-          questionBox.style.display = "none";
-          spawnNextObstacleWithQuestion();
-        }
-      }, questionDurations[currentBatch]);
-    }
-
-    function spawnNextObstacleWithQuestion() {
-      if (!gameRunning) return;
-      spawnObstacle();
-      showQuestion();
     }
 
     const questions = [
@@ -243,32 +289,264 @@
       { q: "Who wrote 'Romeo and Juliet'?", options: ["William Shakespeare", "Charles Dickens", "Jane Austen", "Mark Twain"], answer: "William Shakespeare" },
       { q: "What is the square root of 16?", options: ["4", "8", "16", "2"], answer: "4" },
       { q: "Which gas do plants absorb from the air?", options: ["Carbon dioxide", "Oxygen", "Nitrogen", "Hydrogen"], answer: "Carbon dioxide" },
-      { q: "Boiling point of water?", options: ["100°C", "90°C", "110°C", "120°C"], answer: "100°C" },
-      { q: "Capital of Japan?", options: ["Tokyo", "Seoul", "Beijing", "Bangkok"], answer: "Tokyo" },
-      { q: "Hardest natural substance?", options: ["Diamond", "Gold", "Iron", "Platinum"], answer: "Diamond" },
-      { q: "Speed of light?", options: ["299,792 km/s", "150,000 km/s", "1,000,000 km/s", "30,000 km/s"], answer: "299,792 km/s" },
-      { q: "Currency of the UK?", options: ["Pound", "Euro", "Dollar", "Yen"], answer: "Pound" },
-      { q: "Which is a mammal?", options: ["Whale", "Shark", "Octopus", "Tuna"], answer: "Whale" },
-      { q: "Chemical symbol for Gold?", options: ["Au", "Ag", "Gd", "Go"], answer: "Au" },
-      { q: "Which ocean is largest?", options: ["Pacific", "Atlantic", "Indian", "Arctic"], answer: "Pacific" },
-      { q: "First man on the moon?", options: ["Neil Armstrong", "Buzz Aldrin", "Yuri Gagarin", "John Glenn"], answer: "Neil Armstrong" },
-      { q: "H2O is?", options: ["Water", "Oxygen", "Hydrogen", "Salt"], answer: "Water" },
-      { q: "Primary colors?", options: ["Red, Blue, Yellow", "Green, Blue, Red", "Purple, Yellow, Red", "Red, Green, Orange"], answer: "Red, Blue, Yellow" },
-      { q: "Where's the Eiffel Tower?", options: ["Paris", "London", "Berlin", "Madrid"], answer: "Paris" },
-      { q: "What planet is known as the Red Planet?", options: ["Mars", "Venus", "Saturn", "Mercury"], answer: "Mars" }
+      { q: "What is the boiling point of water?", options: ["100°C", "90°C", "110°C", "120°C"], answer: "100°C" },
+      { q: "What is the capital of Japan?", options: ["Tokyo", "Seoul", "Beijing", "Bangkok"], answer: "Tokyo" },
+      { q: "What is the hardest natural substance?", options: ["Diamond", "Gold", "Iron", "Platinum"], answer: "Diamond" },
+      { q: "What is 12 × 4?", options: ["48", "36", "52", "44"], answer: "48" },
+      { q: "Which element has the chemical symbol 'O'?", options: ["Oxygen", "Gold", "Iron", "Osmium"], answer: "Oxygen" },
+      { q: "Who discovered gravity?", options: ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Nikola Tesla"], answer: "Isaac Newton" },
+      { q: "What is the capital of Brazil?", options: ["Brasilia", "Rio de Janeiro", "São Paulo", "Salvador"], answer: "Brasilia" },
+      { q: "What is the smallest prime number?", options: ["2", "1", "3", "5"], answer: "2" },
+      { q: "Which planet is known as the Red Planet?", options: ["Mars", "Venus", "Mercury", "Jupiter"], answer: "Mars" },
+      { q: "Who wrote 'Pride and Prejudice'?", options: ["Jane Austen", "Emily Brontë", "Charlotte Brontë", "Virginia Woolf"], answer: "Jane Austen" },
+      { q: "What is the chemical formula for water?", options: ["H₂O", "CO₂", "O₂", "HCl"], answer: "H₂O" },
+      { q: "What is the capital of Australia?", options: ["Canberra", "Sydney", "Melbourne", "Brisbane"], answer: "Canberra" },
+      { q: "What is 7²?", options: ["49", "42", "56", "35"], answer: "49" }
     ];
 
-    document.getElementById("start-btn").addEventListener("click", startGame);
+    function spawnObstacle() {
+      obstacle = {
+        x: canvas.width,
+        y: 320,
+        width: 32, // Match bomb image size
+        height: 32
+      };
+      obstacleHandled = false; // Reset for new obstacle
+    }
+
+    function drawObstacle() {
+      if (!obstacle) return;
+      if (bombImage.complete && bombImage.naturalWidth !== 0) {
+        ctx.drawImage(bombImage, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      } else {
+        // Fallback to rectangle if image fails
+        ctx.fillStyle = "#555";
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      }
+    }
+
+    function loseLife() {
+      lives--;
+      document.getElementById("lives").textContent = lives;
+      if (lives <= 0) {
+        gameOver();
+      }
+    }
+
+    function gameOver() {
+      gameRunning = false;
+      document.getElementById("final-score").textContent = `${correctQuestionsAnswered}/${totalQuestions}`;
+      const gameOverBox = document.getElementById("game-over-box");
+      const gameOverTitle = document.getElementById("game-over-title");
+      const gameOverImage = document.getElementById("game-over-image");
+
+      if (currentQuestionIndex >= 19 && lives > 0) {
+        gameOverTitle.textContent = "Congratulations!";
+        gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/licensed.png";
+      } else {
+        gameOverTitle.textContent = "Game Over!";
+        if (currentQuestionIndex <= 4) {
+          gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/not.png";
+        } else if (currentQuestionIndex <= 9) {
+          gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/learner.png";
+        } else if (currentQuestionIndex <= 14) {
+          gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/progress.png";
+        } else {
+          gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/good.png";
+        }
+      }
+
+      gameOverBox.style.display = "block";
+    }
+
+    function resetGame() {
+      correctQuestionsAnswered = 0;
+      lives = 4;
+      currentQuestionIndex = -1;
+      obstacle = null;
+      questionAnswered = false;
+      obstacleHandled = false;
+      gameRunning = false;
+      obstacleSpeed = 2.5; // Reset speed
+      shuffledQuestions = [];
+      document.getElementById("score").textContent = `0/${totalQuestions}`;
+      document.getElementById("lives").textContent = lives;
+      document.getElementById("game-over-box").style.display = "none";
+      document.getElementById("start-screen").style.display = "flex";
+      questionBox.style.display = "none";
+      optionsContainer.innerHTML = "";
+      clearTimeout(questionTimer);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function startGame() {
+      try {
+        if (imagesLoaded < totalImages) {
+          console.warn("Waiting for images to load...");
+          setTimeout(startGame, 100); // Retry after 100ms
+          return;
+        }
+        gameRunning = true;
+        lives = 4;
+        correctQuestionsAnswered = 0;
+        currentQuestionIndex = -1;
+        obstacleSpeed = 2.5; // Initialize speed
+        shuffledQuestions = shuffleArray([...questions]);
+        document.getElementById("score").textContent = `0/${totalQuestions}`;
+        document.getElementById("lives").textContent = lives;
+        document.getElementById("start-screen").style.display = "none";
+        spawnNextObstacleWithQuestion();
+        requestAnimationFrame(gameLoop);
+      } catch (error) {
+        console.error("Error starting game:", error);
+        alert("Failed to start the game. Please check the console for details.");
+      }
+    }
+
+    function getQuestionTimeout() {
+      if (currentQuestionIndex < 5) return 9000; // 9 seconds for questions 1–5
+      if (currentQuestionIndex < 10) return 7000; // 7 seconds for questions 6–10
+      if (currentQuestionIndex < 15) return 5000; // 5 seconds for questions 11–15
+      return 3000; // 3 seconds for questions 16–20
+    }
+
+    function updateDifficulty() {
+      if (currentQuestionIndex < 5) {
+        obstacleSpeed = 2.5;
+      } else if (currentQuestionIndex < 10) {
+        obstacleSpeed = 3.0;
+      } else if (currentQuestionIndex < 15) {
+        obstacleSpeed = 3.5;
+      } else {
+        obstacleSpeed = 4.0;
+      }
+    }
+
+    function showQuestion() {
+      try {
+        const q = shuffledQuestions[++currentQuestionIndex % shuffledQuestions.length];
+        updateDifficulty(); // Update speed before spawning obstacle
+        questionBox.style.display = "block";
+        questionText.textContent = q.q;
+        optionsContainer.innerHTML = "";
+        questionAnswered = false;
+        obstacleHandled = false;
+
+        q.options.forEach(option => {
+          const button = document.createElement("button");
+          button.textContent = option;
+          button.classList.add("option");
+          button.addEventListener("click", () => {
+            checkAnswer(option, q.answer, button);
+          });
+          optionsContainer.appendChild(button);
+        });
+
+        questionTimer = setTimeout(() => {
+          if (!questionAnswered) {
+            questionAnswered = true;
+            lastAnswerCorrect = false; // Ensure no jump on timeout
+            // Do not hide question box here; wait for collision
+          }
+        }, getQuestionTimeout());
+
+        // Check if all questions are answered
+        if (currentQuestionIndex >= shuffledQuestions.length - 1 && lives > 0) {
+          setTimeout(gameOver, getQuestionTimeout());
+        }
+      } catch (error) {
+        console.error("Error showing question:", error);
+      }
+    }
+
+    function updateObstacle() {
+      if (!obstacle) return;
+
+      // Move obstacle
+      obstacle.x -= obstacleSpeed;
+
+      // Trigger jump for correct answer when obstacle is close
+      if (!obstacleHandled && questionAnswered && lastAnswerCorrect && obstacle.x < player.x + player.width + 50 && player.grounded) {
+        player.jump(); // Jump if answered correctly
+        obstacleHandled = true;
+      }
+
+      // Check for collision (wrong answer or no answer)
+      if (!obstacleHandled &&
+          obstacle.x < player.x + player.width &&
+          obstacle.x + obstacle.width > player.x &&
+          player.y + player.height > obstacle.y) {
+        loseLife(); // Collide and lose life
+        obstacleHandled = true;
+        if (questionAnswered && !lastAnswerCorrect) {
+          questionBox.style.display = "none"; // Hide question box on collision for timeout or incorrect
+        }
+        obstacle = null; // Make obstacle vanish immediately
+        setTimeout(() => {
+          spawnNextObstacleWithQuestion();
+        }, 1000); // 1-second delay before next question
+      }
+
+      // Remove obstacle when it passes off-screen (for correct answers)
+      if (obstacle && obstacle.x + obstacle.width < 0) {
+        obstacle = null;
+        if (questionAnswered) {
+          spawnNextObstacleWithQuestion();
+        }
+      }
+    }
+
+    function checkAnswer(selected, correct, button) {
+      clearTimeout(questionTimer);
+      questionAnswered = true;
+
+      lastAnswerCorrect = selected === correct;
+      if (lastAnswerCorrect) {
+        button.classList.add("correct");
+        correctQuestionsAnswered++; // Increment correct answers
+        document.getElementById("score").textContent = `${correctQuestionsAnswered}/${totalQuestions}`;
+      } else {
+        button.classList.add("incorrect");
+      }
+
+      setTimeout(() => {
+        questionBox.style.display = "none";
+        // Spawn next obstacle/question if obstacle is handled or gone
+        if (obstacleHandled || !obstacle || obstacle.x + obstacle.width < 0) {
+          spawnNextObstacleWithQuestion();
+        }
+      }, 1000); // Delay to show feedback
+    }
+
+    function spawnNextObstacleWithQuestion() {
+      if (!gameRunning) return;
+      spawnObstacle();
+      showQuestion();
+    }
+
+    // Ensure DOM is loaded before attaching event listeners
+    document.addEventListener("DOMContentLoaded", () => {
+      const startBtn = document.getElementById("start-btn");
+      if (startBtn) {
+        startBtn.addEventListener("click", startGame);
+      } else {
+        console.error("Start button not found. Check ID 'start-btn'.");
+      }
+    });
 
     function gameLoop() {
       if (!gameRunning) return;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
       ctx.fillStyle = "#228B22";
       ctx.fillRect(0, 340, canvas.width, 60);
+
       player.update();
       player.draw();
       updateObstacle();
       drawObstacle();
+
       requestAnimationFrame(gameLoop);
     }
   </script>
