@@ -223,6 +223,21 @@
     .start-content button:hover {
       background-color: #45a049;
     }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #license-canvas, #license-canvas * {
+        visibility: visible;
+      }
+      #license-canvas {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -255,6 +270,7 @@
   </div>
   <div id="license-popup">
     <canvas id="license-canvas" width="500" height="300"></canvas>
+    <button class="btn" onclick="printLicense()">Print</button>
     <button class="btn" onclick="closeLicensePopup()">Close</button>
   </div>
   <script>
@@ -278,7 +294,7 @@
     printImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/print.png";
 
     let imagesLoaded = 0;
-    const totalImages = 3; // chef1.png, trash.png, print.png
+    const totalImages = 3;
     let imageLoadTimeout = null;
 
     function handleImageLoad(e) {
@@ -627,15 +643,19 @@
         licenseCtx.fillText("License Image Failed to Load", 10, 20);
       }
 
-      // Draw text (adjust coordinates based on print.png layout)
+      // Draw text
       licenseCtx.fillStyle = "#000";
       licenseCtx.font = "20px Arial";
       licenseCtx.textAlign = "center";
-      licenseCtx.fillText(`Alias: ${alias}`, licenseCanvas.width / 2, 100);
-      licenseCtx.fillText(`Date: ${formattedDate}`, licenseCanvas.width / 2, 140);
-      licenseCtx.fillText(`License No: ${licenseCount.toString().padStart(6, "0")}`, licenseCanvas.width / 2, 180);
+      licenseCtx.fillText(`Alias: ${alias}`, 250, 100);
+      licenseCtx.fillText(`Date: ${formattedDate}`, 250, 140);
+      licenseCtx.fillText(`License No: ${licenseCount.toString().padStart(6, "0")}`, 250, 180);
 
       licensePopup.style.display = "block";
+    }
+
+    function printLicense() {
+      window.print();
     }
 
     function closeLicensePopup() {
