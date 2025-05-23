@@ -66,11 +66,11 @@
     }
 
     .option.correct {
-      background-color: #2ecc71 !important; /* Green for correct answer */
+      background-color: #2ecc71 !important;
     }
 
     .option.incorrect {
-      background-color: #e74c3c !important; /* Red for incorrect answer */
+      background-color: #e74c3c !important;
     }
 
     #scoreboard {
@@ -98,10 +98,11 @@
       left: 50%;
       transform: translate(-50%, -50%);
       box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      z-index: 1000;
     }
 
     #game-over-image {
-      max-width: 500px; /* Larger image */
+      max-width: 500px;
       width: 100%;
       height: auto;
       margin: 10px auto;
@@ -111,7 +112,7 @@
     .btn {
       padding: 14px 28px;
       font-size: 18px;
-      margin-top: 20px;
+      margin: 10px;
       cursor: pointer;
       border: none;
       border-radius: 10px;
@@ -123,6 +124,63 @@
     .btn:hover {
       background-color: #45a049;
       transform: scale(1.05);
+    }
+
+    .btn.print {
+      background-color: #FFD700;
+      color: #333;
+    }
+
+    .btn.print:hover {
+      background-color: #E6C200;
+    }
+
+    #alias-popup {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      text-align: center;
+      z-index: 1001;
+    }
+
+    #alias-popup h3 {
+      font-size: 20px;
+      color: #333;
+      margin: 0 0 15px;
+    }
+
+    #alias-input {
+      padding: 10px;
+      font-size: 16px;
+      width: 200px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    #license-popup {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      text-align: center;
+      z-index: 1002;
+    }
+
+    #license-canvas {
+      display: block;
+      margin: 0 auto;
     }
 
     #start-screen {
@@ -188,6 +246,16 @@
     <img id="game-over-image" src="" alt="Game Over Image"/>
     <p>Your score: <span id="final-score"></span></p>
     <button class="btn" onclick="resetGame()">ReBlend</button>
+    <button class="btn print" id="print-license-btn" style="display: none;" onclick="showAliasPopup()">Print License</button>
+  </div>
+  <div id="alias-popup">
+    <h3>Enter Alias:</h3>
+    <input type="text" id="alias-input" placeholder="Your alias" maxlength="50"/>
+    <button class="btn" onclick="submitAlias()">Submit</button>
+  </div>
+  <div id="license-popup">
+    <canvas id="license-canvas" width="500" height="300"></canvas>
+    <button class="btn" onclick="closeLicensePopup()">Close</button>
   </div>
   <script>
     const canvas = document.getElementById("gameCanvas");
@@ -195,20 +263,27 @@
     const questionBox = document.getElementById("question-box");
     const questionText = document.getElementById("question-text");
     const optionsContainer = document.getElementById("options");
+    const printLicenseBtn = document.getElementById("print-license-btn");
+    const aliasPopup = document.getElementById("alias-popup");
+    const licensePopup = document.getElementById("license-popup");
+    const licenseCanvas = document.getElementById("license-canvas");
+    const licenseCtx = licenseCanvas.getContext("2d");
 
     // Load images
     const chefImage = new Image();
     chefImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/chef1.png";
     const trashImage = new Image();
     trashImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/trash.png";
+    const printImage = new Image();
+    printImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/print.png";
 
     let imagesLoaded = 0;
-    const totalImages = 2;
+    const totalImages = 3; // chef1.png, trash.png, print.png
     let imageLoadTimeout = null;
 
-    function handleImageLoad() {
+    function handleImageLoad(e) {
       imagesLoaded++;
-      console.log(`Image loaded. Total loaded: ${imagesLoaded}/${totalImages}`);
+      console.log(`Image loaded: ${e.target.src}, Dimensions: ${e.target.naturalWidth}x${e.target.naturalHeight}, Total loaded: ${imagesLoaded}/${totalImages}`);
       if (imagesLoaded === totalImages) {
         clearTimeout(imageLoadTimeout);
         console.log("All images loaded successfully");
@@ -226,8 +301,10 @@
 
     chefImage.onload = handleImageLoad;
     trashImage.onload = handleImageLoad;
+    printImage.onload = handleImageLoad;
     chefImage.onerror = handleImageError;
     trashImage.onerror = handleImageError;
+    printImage.onerror = handleImageError;
 
     let correctQuestionsAnswered = 0;
     const totalQuestions = 20;
@@ -238,13 +315,13 @@
     let questionAnswered = false;
     let questionTimer = null;
     let obstacleHandled = false;
-    let obstacleSpeed = 2.5; // Initial speed
+    let obstacleSpeed = 2.5;
     let lastAnswerCorrect = false;
     let shuffledQuestions = [];
 
     const player = {
       x: 100,
-      y: 340 - 48, // Base at y: 340, height 48
+      y: 340 - 48,
       width: 48,
       height: 48,
       vy: 0,
@@ -458,11 +535,11 @@
     function spawnObstacle() {
       obstacle = {
         x: canvas.width,
-        y: 340 - 48, // Base at y: 340, height 48
+        y: 340 - 48,
         width: 48,
         height: 48
       };
-      obstacleHandled = false; // Reset for new obstacle
+      obstacleHandled = false;
     }
 
     function drawObstacle() {
@@ -493,8 +570,10 @@
       if (currentQuestionIndex >= 19 && lives > 0) {
         gameOverTitle.textContent = "Congratulations!";
         gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/licensed.png";
+        printLicenseBtn.style.display = "inline-block";
       } else {
         gameOverTitle.textContent = "Game Over!";
+        printLicenseBtn.style.display = "none";
         if (currentQuestionIndex <= 4) {
           gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/not.png";
         } else if (currentQuestionIndex <= 9) {
@@ -509,6 +588,61 @@
       gameOverBox.style.display = "block";
     }
 
+    function showAliasPopup() {
+      gameOverBox.style.display = "none";
+      aliasPopup.style.display = "block";
+      document.getElementById("alias-input").value = "";
+      document.getElementById("alias-input").focus();
+    }
+
+    function submitAlias() {
+      const alias = document.getElementById("alias-input").value.trim();
+      if (alias === "") {
+        alert("Please enter an alias.");
+        return;
+      }
+      aliasPopup.style.display = "none";
+      showLicense(alias);
+    }
+
+    function showLicense(alias) {
+      // Increment license count
+      let licenseCount = parseInt(localStorage.getItem("licenseCount") || "0") + 1;
+      localStorage.setItem("licenseCount", licenseCount);
+
+      // Format current date
+      const date = new Date();
+      const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const formattedDate = `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+
+      // Draw license on canvas
+      licenseCtx.clearRect(0, 0, licenseCanvas.width, licenseCanvas.height);
+      if (printImage.complete && printImage.naturalWidth !== 0) {
+        licenseCtx.drawImage(printImage, 0, 0, licenseCanvas.width, licenseCanvas.height);
+      } else {
+        licenseCtx.fillStyle = "#fff";
+        licenseCtx.fillRect(0, 0, licenseCanvas.width, licenseCanvas.height);
+        licenseCtx.fillStyle = "#000";
+        licenseCtx.font = "16px Arial";
+        licenseCtx.fillText("License Image Failed to Load", 10, 20);
+      }
+
+      // Draw text (adjust coordinates based on print.png layout)
+      licenseCtx.fillStyle = "#000";
+      licenseCtx.font = "20px Arial";
+      licenseCtx.textAlign = "center";
+      licenseCtx.fillText(`Alias: ${alias}`, licenseCanvas.width / 2, 100);
+      licenseCtx.fillText(`Date: ${formattedDate}`, licenseCanvas.width / 2, 140);
+      licenseCtx.fillText(`License No: ${licenseCount.toString().padStart(6, "0")}`, licenseCanvas.width / 2, 180);
+
+      licensePopup.style.display = "block";
+    }
+
+    function closeLicensePopup() {
+      licensePopup.style.display = "none";
+      gameOverBox.style.display = "block";
+    }
+
     function resetGame() {
       correctQuestionsAnswered = 0;
       lives = 4;
@@ -517,7 +651,7 @@
       questionAnswered = false;
       obstacleHandled = false;
       gameRunning = false;
-      obstacleSpeed = 2.5; // Reset speed
+      obstacleSpeed = 2.5;
       shuffledQuestions = [];
       document.getElementById("score").textContent = `0/${totalQuestions}`;
       document.getElementById("lives").textContent = lives;
@@ -537,8 +671,8 @@
           imageLoadTimeout = setTimeout(() => {
             console.warn("Image loading timeout. Starting game with fallbacks.");
             proceedWithGameStart();
-          }, 5000); // 5-second timeout
-          setTimeout(startGame, 100); // Retry after 100ms
+          }, 3000);
+          setTimeout(startGame, 100);
           return;
         }
         proceedWithGameStart();
@@ -554,7 +688,7 @@
       lives = 4;
       correctQuestionsAnswered = 0;
       currentQuestionIndex = -1;
-      obstacleSpeed = 2.5; // Initialize speed
+      obstacleSpeed = 2.5;
       shuffledQuestions = shuffleArray([...questions]);
       document.getElementById("score").textContent = `0/${totalQuestions}`;
       document.getElementById("lives").textContent = lives;
@@ -564,10 +698,10 @@
     }
 
     function getQuestionTimeout() {
-      if (currentQuestionIndex < 5) return 9000; // 9 seconds for questions 1–5
-      if (currentQuestionIndex < 10) return 7000; // 7 seconds for questions 6–10
-      if (currentQuestionIndex < 15) return 5000; // 5 seconds for questions 11–15
-      return 3000; // 3 seconds for questions 16–20
+      if (currentQuestionIndex < 5) return 9000;
+      if (currentQuestionIndex < 10) return 7000;
+      if (currentQuestionIndex < 15) return 5000;
+      return 3000;
     }
 
     function updateDifficulty() {
@@ -585,7 +719,7 @@
     function showQuestion() {
       try {
         const q = shuffledQuestions[++currentQuestionIndex % shuffledQuestions.length];
-        updateDifficulty(); // Update speed before spawning obstacle
+        updateDifficulty();
         questionBox.style.display = "block";
         questionText.textContent = q.q;
         optionsContainer.innerHTML = "";
@@ -605,12 +739,10 @@
         questionTimer = setTimeout(() => {
           if (!questionAnswered) {
             questionAnswered = true;
-            lastAnswerCorrect = false; // Ensure no jump on timeout
-            // Do not hide question box here; wait for collision
+            lastAnswerCorrect = false;
           }
         }, getQuestionTimeout());
 
-        // Check if all questions are answered
         if (currentQuestionIndex >= shuffledQuestions.length - 1 && lives > 0) {
           setTimeout(gameOver, getQuestionTimeout());
         }
@@ -622,32 +754,28 @@
     function updateObstacle() {
       if (!obstacle) return;
 
-      // Move obstacle
       obstacle.x -= obstacleSpeed;
 
-      // Trigger jump for correct answer when obstacle is close
       if (!obstacleHandled && questionAnswered && lastAnswerCorrect && obstacle.x < player.x + player.width + 50 && player.grounded) {
-        player.jump(); // Jump if answered correctly
+        player.jump();
         obstacleHandled = true;
       }
 
-      // Check for collision (wrong answer or no answer)
       if (!obstacleHandled &&
           obstacle.x < player.x + player.width &&
           obstacle.x + obstacle.width > player.x &&
           player.y + player.height > obstacle.y) {
-        loseLife(); // Collide and lose life
+        loseLife();
         obstacleHandled = true;
         if (questionAnswered && !lastAnswerCorrect) {
-          questionBox.style.display = "none"; // Hide question box on collision for timeout or incorrect
+          questionBox.style.display = "none";
         }
-        obstacle = null; // Make obstacle vanish immediately
+        obstacle = null;
         setTimeout(() => {
           spawnNextObstacleWithQuestion();
-        }, 1000); // 1-second delay before next question
+        }, 1000);
       }
 
-      // Remove obstacle when it passes off-screen (for correct answers)
       if (obstacle && obstacle.x + obstacle.width < 0) {
         obstacle = null;
         if (questionAnswered) {
@@ -663,7 +791,7 @@
       lastAnswerCorrect = selected === correct;
       if (lastAnswerCorrect) {
         button.classList.add("correct");
-        correctQuestionsAnswered++; // Increment correct answers
+        correctQuestionsAnswered++;
         document.getElementById("score").textContent = `${correctQuestionsAnswered}/${totalQuestions}`;
       } else {
         button.classList.add("incorrect");
@@ -671,11 +799,10 @@
 
       setTimeout(() => {
         questionBox.style.display = "none";
-        // Spawn next obstacle/question if obstacle is handled or gone
         if (obstacleHandled || !obstacle || obstacle.x + obstacle.width < 0) {
           spawnNextObstacleWithQuestion();
         }
-      }, 1000); // Delay to show feedback
+      }, 1000);
     }
 
     function spawnNextObstacleWithQuestion() {
@@ -684,7 +811,6 @@
       showQuestion();
     }
 
-    // Ensure DOM is loaded before attaching event listeners
     document.addEventListener("DOMContentLoaded", () => {
       const startBtn = document.getElementById("start-btn");
       if (startBtn) {
