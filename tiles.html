@@ -66,11 +66,11 @@
     }
 
     .option.correct {
-      background-color: #2ecc71 !important;
+      background-color: #2ecc71 !important; /* Green for correct answer */
     }
 
     .option.incorrect {
-      background-color: #e74c3c !important;
+      background-color: #e74c3c !important; /* Red for incorrect answer */
     }
 
     #scoreboard {
@@ -98,11 +98,10 @@
       left: 50%;
       transform: translate(-50%, -50%);
       box-shadow: 0 0 20px rgba(0,0,0,0.2);
-      z-index: 1000;
     }
 
     #game-over-image {
-      max-width: 500px;
+      max-width: 500px; /* Larger image */
       width: 100%;
       height: auto;
       margin: 10px auto;
@@ -112,7 +111,7 @@
     .btn {
       padding: 14px 28px;
       font-size: 18px;
-      margin: 10px;
+      margin-top: 20px;
       cursor: pointer;
       border: none;
       border-radius: 10px;
@@ -126,61 +125,22 @@
       transform: scale(1.05);
     }
 
-    .btn.print {
-      background-color: #FFD700;
-      color: #333;
+    .golden-btn {
+      padding: 14px 28px;
+      font-size: 18px;
+      margin-top: 20px;
+      margin-left: 10px; /* Space between buttons */
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      background-color: #FFD700; /* Golden color */
+      color: #333; /* Dark text for contrast */
+      transition: background-color 0.3s ease, transform 0.1s ease;
     }
 
-    .btn.print:hover {
-      background-color: #E6C200;
-    }
-
-    #alias-popup {
-      display: none;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.2);
-      text-align: center;
-      z-index: 1001;
-    }
-
-    #alias-popup h3 {
-      font-size: 20px;
-      color: #333;
-      margin: 0 0 15px;
-    }
-
-    #alias-input {
-      padding: 10px;
-      font-size: 16px;
-      width: 200px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-
-    #license-popup {
-      display: none;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.2);
-      text-align: center;
-      z-index: 1002;
-    }
-
-    #license-canvas {
-      display: block;
-      margin: 0 auto;
+    .golden-btn:hover {
+      background-color: #E6C200; /* Slightly darker gold on hover */
+      transform: scale(1.05);
     }
 
     #start-screen {
@@ -223,21 +183,6 @@
     .start-content button:hover {
       background-color: #45a049;
     }
-
-    @media print {
-      body * {
-        visibility: hidden;
-      }
-      #license-canvas, #license-canvas * {
-        visibility: visible;
-      }
-      #license-canvas {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-      }
-    }
   </style>
 </head>
 <body>
@@ -248,7 +193,7 @@
   </div>
   <div id="scoreboard">
     Score: <span id="score">0/20</span><br>
-    Lives: <span id="lives">4</span>
+    Lives: <span id="lives">2</span>
   </div>
   <div id="start-screen">
     <div class="start-content">
@@ -260,18 +205,10 @@
     <h2 id="game-over-title">Game Over!</h2>
     <img id="game-over-image" src="" alt="Game Over Image"/>
     <p>Your score: <span id="final-score"></span></p>
-    <button class="btn" onclick="resetGame()">ReBlend</button>
-    <button class="btn print" id="print-license-btn" style="display: none;" onclick="showAliasPopup()">Print License</button>
-  </div>
-  <div id="alias-popup">
-    <h3>Enter Alias:</h3>
-    <input type="text" id="alias-input" placeholder="Your alias" maxlength="50"/>
-    <button class="btn" onclick="submitAlias()">Submit</button>
-  </div>
-  <div id="license-popup">
-    <canvas id="license-canvas" width="500" height="300"></canvas>
-    <button class="btn" onclick="printLicense()">Print</button>
-    <button class="btn" onclick="closeLicensePopup()">Close</button>
+    <div style="display: flex; justify-content: center; gap: 10px;">
+      <button class="btn" onclick="resetGame()">ReBlend</button>
+      <button class="golden-btn" onclick="downloadLicense()">Print License</button>
+    </div>
   </div>
   <script>
     const canvas = document.getElementById("gameCanvas");
@@ -279,22 +216,15 @@
     const questionBox = document.getElementById("question-box");
     const questionText = document.getElementById("question-text");
     const optionsContainer = document.getElementById("options");
-    const printLicenseBtn = document.getElementById("print-license-btn");
-    const aliasPopup = document.getElementById("alias-popup");
-    const licensePopup = document.getElementById("license-popup");
-    const licenseCanvas = document.getElementById("license-canvas");
-    const licenseCtx = licenseCanvas.getContext("2d");
 
     // Load images
     const chefImage = new Image();
     chefImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/chef1.png";
     const trashImage = new Image();
     trashImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/trash.png";
-    const printImage = new Image();
-    printImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/print.png";
 
     let imagesLoaded = 0;
-    const totalImages = 3;
+    const totalImages = 2;
     let imageLoadTimeout = null;
 
     function handleImageLoad(e) {
@@ -317,14 +247,12 @@
 
     chefImage.onload = handleImageLoad;
     trashImage.onload = handleImageLoad;
-    printImage.onload = handleImageLoad;
     chefImage.onerror = handleImageError;
     trashImage.onerror = handleImageError;
-    printImage.onerror = handleImageError;
 
     let correctQuestionsAnswered = 0;
     const totalQuestions = 20;
-    let lives = 4;
+    let lives = 2;
     let gameRunning = false;
     let currentQuestionIndex = -1;
     let obstacle = null;
@@ -583,18 +511,16 @@
       const gameOverTitle = document.getElementById("game-over-title");
       const gameOverImage = document.getElementById("game-over-image");
 
-      if (currentQuestionIndex >= 19 && lives > 0) {
+      if (currentQuestionIndex >= totalQuestions - 1 && lives > 0) {
         gameOverTitle.textContent = "Congratulations!";
         gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/licensed.png";
-        printLicenseBtn.style.display = "inline-block";
       } else {
         gameOverTitle.textContent = "Game Over!";
-        printLicenseBtn.style.display = "none";
-        if (currentQuestionIndex <= 4) {
+        if (correctQuestionsAnswered < 5) {
           gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/not.png";
-        } else if (currentQuestionIndex <= 9) {
+        } else if (correctQuestionsAnswered < 10) {
           gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/learner.png";
-        } else if (currentQuestionIndex <= 14) {
+        } else if (correctQuestionsAnswered < 15) {
           gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/progress.png";
         } else {
           gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/good.png";
@@ -604,68 +530,9 @@
       gameOverBox.style.display = "block";
     }
 
-    function showAliasPopup() {
-      gameOverBox.style.display = "none";
-      aliasPopup.style.display = "block";
-      document.getElementById("alias-input").value = "";
-      document.getElementById("alias-input").focus();
-    }
-
-    function submitAlias() {
-      const alias = document.getElementById("alias-input").value.trim();
-      if (alias === "") {
-        alert("Please enter an alias.");
-        return;
-      }
-      aliasPopup.style.display = "none";
-      showLicense(alias);
-    }
-
-    function showLicense(alias) {
-      // Increment license count
-      let licenseCount = parseInt(localStorage.getItem("licenseCount") || "0") + 1;
-      localStorage.setItem("licenseCount", licenseCount);
-
-      // Format current date
-      const date = new Date();
-      const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      const formattedDate = `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
-
-      // Draw license on canvas
-      licenseCtx.clearRect(0, 0, licenseCanvas.width, licenseCanvas.height);
-      if (printImage.complete && printImage.naturalWidth !== 0) {
-        licenseCtx.drawImage(printImage, 0, 0, licenseCanvas.width, licenseCanvas.height);
-      } else {
-        licenseCtx.fillStyle = "#fff";
-        licenseCtx.fillRect(0, 0, licenseCanvas.width, licenseCanvas.height);
-        licenseCtx.fillStyle = "#000";
-        licenseCtx.font = "16px Arial";
-        licenseCtx.fillText("License Image Failed to Load", 10, 20);
-      }
-
-      // Draw text
-      licenseCtx.fillStyle = "#000";
-      licenseCtx.font = "20px Arial";
-      licenseCtx.textAlign = "center";
-      licenseCtx.fillText(`Alias: ${alias}`, 250, 100);
-      licenseCtx.fillText(`Date: ${formattedDate}`, 250, 140);
-      licenseCtx.fillText(`License No: ${licenseCount.toString().padStart(6, "0")}`, 250, 180);
-
-      licensePopup.style.display = "block";
-    }
-
-    function printLicense() {
-      window.print();
-    }
-
-    function closeLicensePopup() {
-      licensePopup.style.display = "none";
-      gameOverBox.style.display = "block";
-    }
-
     function resetGame() {
       correctQuestionsAnswered = 0;
-      lives = 4;
+      lives = 2;
       currentQuestionIndex = -1;
       obstacle = null;
       questionAnswered = false;
@@ -682,6 +549,39 @@
       clearTimeout(questionTimer);
       clearTimeout(imageLoadTimeout);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function downloadLicense() {
+      try {
+        const gameOverImage = document.getElementById("game-over-image");
+        if (!gameOverImage || !gameOverImage.src) {
+          console.error("Game-over image not found or source is empty.");
+          alert("Unable to download: Image not found.");
+          return;
+        }
+
+        fetch(gameOverImage.src)
+          .then(response => response.blob())
+          .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.style.display = "none";
+            a.href = url;
+            const extension = gameOverImage.src.endsWith(".png") ? "png" : "jpeg";
+            a.download = `license.${extension}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          })
+          .catch(error => {
+            console.error("Error downloading image:", error);
+            alert("Failed to download the image. Please check the console for details.");
+          });
+      } catch (error) {
+        console.error("Error initiating download:", error);
+        alert("Failed to download the image. Please check the console for details.");
+      }
     }
 
     function startGame() {
@@ -705,7 +605,7 @@
     function proceedWithGameStart() {
       clearTimeout(imageLoadTimeout);
       gameRunning = true;
-      lives = 4;
+      lives = 2;
       correctQuestionsAnswered = 0;
       currentQuestionIndex = -1;
       obstacleSpeed = 2.5;
