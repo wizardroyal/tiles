@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Quiz Runner</title>
+  <title>Blend Runner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
@@ -22,28 +23,23 @@
       border: 5px solid #4CAF50;
       border-radius: 15px;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-      width: 100%;
-      max-width: 800px;
-      height: auto;
-      aspect-ratio: 2 / 1;
-      touch-action: none; /* Prevent scrolling on touch */
     }
 
     #question-box {
       position: absolute;
-      top: 5%;
+      top: 10px;
       left: 50%;
       transform: translateX(-50%);
       background-color: rgba(255, 255, 255, 0.8);
       border-radius: 12px;
-      padding: 15px;
+      padding: 10px 15px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-      max-width: 90%;
+      max-width: 80%;
       display: none;
     }
 
     #question-box h3 {
-      font-size: clamp(16px, 5vw, 22px); /* Responsive font size */
+      font-size: 20px;
       color: #333;
       margin: 0 0 15px;
     }
@@ -51,11 +47,11 @@
     #options {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 10px;
     }
 
     .option {
-      padding: 15px 20px;
+      padding: 12px 24px;
       background-color: #4CAF50;
       color: white;
       border: none;
@@ -63,8 +59,6 @@
       cursor: pointer;
       transition: background-color 0.3s, transform 0.1s;
       text-align: center;
-      font-size: clamp(14px, 4vw, 18px); /* Responsive font size */
-      min-height: 50px; /* Ensure tappable size */
     }
 
     .option:hover {
@@ -73,22 +67,22 @@
     }
 
     .option.correct {
-      background-color: #2ecc71 !important;
+      background-color: #2ecc71 !important; /* Green for correct answer */
     }
 
     .option.incorrect {
-      background-color: #e74c3c !important;
+      background-color: #e74c3c !important; /* Red for incorrect answer */
     }
 
     #scoreboard {
       position: absolute;
-      top: 5%;
-      left: 5%;
+      top: 20px;
+      left: 20px;
       text-align: left;
-      font-size: clamp(14px, 4vw, 18px);
+      font-size: 18px;
       color: #333;
       background-color: rgba(255, 255, 255, 0.8);
-      padding: 10px;
+      padding: 12px;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
@@ -96,7 +90,7 @@
     #game-over-box {
       text-align: center;
       display: none;
-      padding: 20px;
+      padding: 25px;
       background: #fff;
       border: 2px solid #444;
       border-radius: 15px;
@@ -105,31 +99,26 @@
       left: 50%;
       transform: translate(-50%, -50%);
       box-shadow: 0 0 20px rgba(0,0,0,0.2);
-      max-width: 90%;
     }
 
     #game-over-image {
-      max-width: 100%;
+      max-width: 500px; /* Larger image */
       width: 100%;
       height: auto;
       margin: 10px auto;
       display: block;
     }
 
-    .btn, .golden-btn {
-      padding: 15px 25px;
-      font-size: clamp(14px, 4vw, 18px);
-      margin-top: 15px;
+    .btn {
+      padding: 14px 28px;
+      font-size: 18px;
+      margin-top: 20px;
       cursor: pointer;
       border: none;
       border-radius: 10px;
-      transition: background-color 0.3s ease, transform 0.1s ease;
-      min-width: 120px;
-    }
-
-    .btn {
       background-color: #4CAF50;
       color: white;
+      transition: background-color 0.3s ease, transform 0.1s ease;
     }
 
     .btn:hover {
@@ -138,13 +127,20 @@
     }
 
     .golden-btn {
-      margin-left: 10px;
-      background-color: #FFD700;
-      color: #333;
+      padding: 14px 28px;
+      font-size: 18px;
+      margin-top: 20px;
+      margin-left: 10px; /* Space between buttons */
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      background-color: #FFD700; /* Golden color */
+      color: #333; /* Dark text for contrast */
+      transition: background-color 0.3s ease, transform 0.1s ease;
     }
 
     .golden-btn:hover {
-      background-color: #E6C200;
+      background-color: #E6C200; /* Slightly darker gold on hover */
       transform: scale(1.05);
     }
 
@@ -163,29 +159,26 @@
     }
 
     .welcome-message {
-      background-color: rgba(255, 255, 255, 0.8);
-      border-radius: 12px;
-      padding: 15px;
-      margin-bottom: 20px;
-      max-width: 90%;
-      text-align: center;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-      font-size: clamp(14px, 4vw, 18px);
+      font-family: 'Dancing Script', cursive;
+      font-size: 28px;
       color: #333;
+      text-align: center;
+      max-width: 80%;
+      margin-bottom: 20px;
+      line-height: 1.4;
     }
 
     .start-content {
       text-align: center;
       background: #ffffffb3;
-      padding: 20px;
+      padding: 30px;
       border-radius: 12px;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-      max-width: 90%;
     }
 
     .start-content h1 {
       margin-bottom: 20px;
-      font-size: clamp(24px, 6vw, 36px);
+      font-size: 36px;
       color: #333;
     }
 
@@ -193,7 +186,7 @@
       padding: 15px 30px;
       background-color: #4CAF50;
       color: white;
-      font-size: clamp(16px, 4vw, 20px);
+      font-size: 18px;
       border: none;
       border-radius: 10px;
       cursor: pointer;
@@ -205,7 +198,7 @@
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
+  <canvas id="gameCanvas" width="800" height="400"></canvas>
   <div id="question-box">
     <h3 id="question-text"></h3>
     <div id="options"></div>
@@ -216,10 +209,12 @@
   </div>
   <div id="start-screen">
     <div class="welcome-message">
-      You have heard of the great innovation, you have come as an apprentice to learn the lore and build your skills, do you have what it takes to become Chef?
+      You have heard of the great innovation,<br>
+      you have come as an apprentice to learn the lore and build your skills,<br>
+      do you have what it takes to become Chef?
     </div>
     <div class="start-content">
-      <h1>Quiz Runner</h1>
+      <h1>Blend Runner</h1>
       <button id="start-btn">Start Game</button>
     </div>
   </div>
@@ -238,31 +233,6 @@
     const questionBox = document.getElementById("question-box");
     const questionText = document.getElementById("question-text");
     const optionsContainer = document.getElementById("options");
-
-    // Set canvas size dynamically
-    function resizeCanvas() {
-      const maxWidth = window.innerWidth * 0.95;
-      const maxHeight = window.innerHeight * 0.95;
-      const aspectRatio = 2 / 1;
-      canvas.width = Math.min(maxWidth, 800);
-      canvas.height = canvas.width / aspectRatio;
-      if (canvas.height > maxHeight) {
-        canvas.height = maxHeight;
-        canvas.width = canvas.height * aspectRatio;
-      }
-      // Adjust player and obstacle positions for new canvas size
-      player.x = canvas.width * 0.125; // 100/800 original
-      player.width = canvas.width * 0.06; // 48/800
-      player.height = canvas.width * 0.06;
-      player.y = canvas.height - 60 - player.height;
-      if (obstacle) {
-        obstacle.width = canvas.width * 0.06;
-        obstacle.height = canvas.width * 0.06;
-        obstacle.y = canvas.height - 60 - obstacle.height;
-      }
-    }
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
 
     // Load images
     const chefImage = new Image();
@@ -309,24 +279,22 @@
     let obstacleSpeed = 2.5;
     let lastAnswerCorrect = false;
     let shuffledQuestions = [];
-    let lastTime = 0;
 
     const player = {
-      x: canvas.width * 0.125, // 100/800
-      y: 0,
-      width: canvas.width * 0.06, // 48/800
-      height: canvas.width * 0.06,
+      x: 100,
+      y: 340 - 48,
+      width: 48,
+      height: 48,
       vy: 0,
-      gravity: 1000, // Pixels/s^2
-      jumpStrength: -400, // Pixels/s
+      gravity: 1,
+      jumpStrength: -24,
       grounded: true,
-      update(deltaTime) {
-        this.vy += this.gravity * deltaTime;
-        this.y += this.vy * deltaTime;
+      update() {
+        this.vy += this.gravity;
+        this.y += this.vy;
 
-        const groundY = canvas.height - 60 - this.height;
-        if (this.y >= groundY) {
-          this.y = groundY;
+        if (this.y >= 340 - this.height) {
+          this.y = 340 - this.height;
           this.vy = 0;
           this.grounded = true;
         } else {
@@ -528,9 +496,9 @@
     function spawnObstacle() {
       obstacle = {
         x: canvas.width,
-        y: canvas.height - 60 - canvas.width * 0.06,
-        width: canvas.width * 0.06,
-        height: canvas.width * 0.06
+        y: 340 - 48,
+        width: 48,
+        height: 48
       };
       obstacleHandled = false;
     }
@@ -598,11 +566,6 @@
       clearTimeout(questionTimer);
       clearTimeout(imageLoadTimeout);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      player.x = canvas.width * 0.125;
-      player.width = canvas.width * 0.06;
-      player.height = canvas.width * 0.06;
-      player.y = canvas.height - 60 - player.height;
-      lastTime = 0;
     }
 
     function downloadLicense() {
@@ -667,12 +630,7 @@
       document.getElementById("score").textContent = `0/${totalQuestions}`;
       document.getElementById("lives").textContent = lives;
       document.getElementById("start-screen").style.display = "none";
-      player.x = canvas.width * 0.125;
-      player.width = canvas.width * 0.06;
-      player.height = canvas.width * 0.06;
-      player.y = canvas.height - 60 - player.height;
       spawnNextObstacleWithQuestion();
-      lastTime = 0;
       requestAnimationFrame(gameLoop);
     }
 
@@ -735,9 +693,7 @@
 
       obstacle.x -= obstacleSpeed;
 
-      // Adjust jump trigger distance for canvas size
-      if (!obstacleHandled && questionAnswered && lastAnswerCorrect && 
-          obstacle.x < player.x + player.width + canvas.width * 0.0625 && player.grounded) { // 50/800
+      if (!obstacleHandled && questionAnswered && lastAnswerCorrect && obstacle.x < player.x + player.width + 50 && player.grounded) {
         player.jump();
         obstacleHandled = true;
       }
@@ -792,7 +748,6 @@
       showQuestion();
     }
 
-    // Input handling
     document.addEventListener("DOMContentLoaded", () => {
       const startBtn = document.getElementById("start-btn");
       if (startBtn) {
@@ -802,32 +757,15 @@
       }
     });
 
-    // Keyboard input for jumping
-    document.addEventListener("keydown", (e) => {
-      if (e.code === "Space" && gameRunning && lastAnswerCorrect) {
-        player.jump();
-      }
-    });
-
-    // Touch input for jumping
-    canvas.addEventListener("touchstart", (e) => {
-      e.preventDefault();
-      if (gameRunning && lastAnswerCorrect) {
-        player.jump();
-      }
-    });
-
-    function gameLoop(timestamp) {
+    function gameLoop() {
       if (!gameRunning) return;
 
-      const deltaTime = Math.min((timestamp - lastTime) / 1000, 0.1); // Cap at 0.1s
-      lastTime = timestamp;
-
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#228B22";
-      ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
 
-      player.update(deltaTime);
+      ctx.fillStyle = "#228B22";
+      ctx.fillRect(0, 340, canvas.width, 60);
+
+      player.update();
       player.draw();
       updateObstacle();
       drawObstacle();
