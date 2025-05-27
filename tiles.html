@@ -22,23 +22,28 @@
       border: 5px solid #4CAF50;
       border-radius: 15px;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 800px;
+      height: auto;
+      aspect-ratio: 2 / 1;
+      touch-action: none; /* Prevent scrolling on touch */
     }
 
     #question-box {
       position: absolute;
-      top: 10px;
+      top: 5%;
       left: 50%;
       transform: translateX(-50%);
       background-color: rgba(255, 255, 255, 0.8);
       border-radius: 12px;
-      padding: 10px 15px;
+      padding: 15px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-      max-width: 80%;
+      max-width: 90%;
       display: none;
     }
 
     #question-box h3 {
-      font-size: 20px;
+      font-size: clamp(16px, 5vw, 22px); /* Responsive font size */
       color: #333;
       margin: 0 0 15px;
     }
@@ -46,11 +51,11 @@
     #options {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 12px;
     }
 
     .option {
-      padding: 12px 24px;
+      padding: 15px 20px;
       background-color: #4CAF50;
       color: white;
       border: none;
@@ -58,6 +63,8 @@
       cursor: pointer;
       transition: background-color 0.3s, transform 0.1s;
       text-align: center;
+      font-size: clamp(14px, 4vw, 18px); /* Responsive font size */
+      min-height: 50px; /* Ensure tappable size */
     }
 
     .option:hover {
@@ -66,22 +73,22 @@
     }
 
     .option.correct {
-      background-color: #2ecc71 !important; /* Green for correct answer */
+      background-color: #2ecc71 !important;
     }
 
     .option.incorrect {
-      background-color: #e74c3c !important; /* Red for incorrect answer */
+      background-color: #e74c3c !important;
     }
 
     #scoreboard {
       position: absolute;
-      top: 20px;
-      left: 20px;
+      top: 5%;
+      left: 5%;
       text-align: left;
-      font-size: 18px;
+      font-size: clamp(14px, 4vw, 18px);
       color: #333;
       background-color: rgba(255, 255, 255, 0.8);
-      padding: 12px;
+      padding: 10px;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
@@ -89,7 +96,7 @@
     #game-over-box {
       text-align: center;
       display: none;
-      padding: 25px;
+      padding: 20px;
       background: #fff;
       border: 2px solid #444;
       border-radius: 15px;
@@ -98,26 +105,31 @@
       left: 50%;
       transform: translate(-50%, -50%);
       box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      max-width: 90%;
     }
 
     #game-over-image {
-      max-width: 500px; /* Larger image */
+      max-width: 100%;
       width: 100%;
       height: auto;
       margin: 10px auto;
       display: block;
     }
 
-    .btn {
-      padding: 14px 28px;
-      font-size: 18px;
-      margin-top: 20px;
+    .btn, .golden-btn {
+      padding: 15px 25px;
+      font-size: clamp(14px, 4vw, 18px);
+      margin-top: 15px;
       cursor: pointer;
       border: none;
       border-radius: 10px;
+      transition: background-color 0.3s ease, transform 0.1s ease;
+      min-width: 120px;
+    }
+
+    .btn {
       background-color: #4CAF50;
       color: white;
-      transition: background-color 0.3s ease, transform 0.1s ease;
     }
 
     .btn:hover {
@@ -126,20 +138,13 @@
     }
 
     .golden-btn {
-      padding: 14px 28px;
-      font-size: 18px;
-      margin-top: 20px;
-      margin-left: 10px; /* Space between buttons */
-      cursor: pointer;
-      border: none;
-      border-radius: 10px;
-      background-color: #FFD700; /* Golden color */
-      color: #333; /* Dark text for contrast */
-      transition: background-color 0.3s ease, transform 0.1s ease;
+      margin-left: 10px;
+      background-color: #FFD700;
+      color: #333;
     }
 
     .golden-btn:hover {
-      background-color: #E6C200; /* Slightly darker gold on hover */
+      background-color: #E6C200;
       transform: scale(1.05);
     }
 
@@ -159,14 +164,15 @@
     .start-content {
       text-align: center;
       background: #ffffffb3;
-      padding: 30px;
+      padding: 20px;
       border-radius: 12px;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      max-width: 90%;
     }
 
     .start-content h1 {
       margin-bottom: 20px;
-      font-size: 36px;
+      font-size: clamp(24px, 6vw, 36px);
       color: #333;
     }
 
@@ -174,7 +180,7 @@
       padding: 15px 30px;
       background-color: #4CAF50;
       color: white;
-      font-size: 18px;
+      font-size: clamp(16px, 4vw, 20px);
       border: none;
       border-radius: 10px;
       cursor: pointer;
@@ -186,7 +192,7 @@
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas" width="800" height="400"></canvas>
+  <canvas id="gameCanvas"></canvas>
   <div id="question-box">
     <h3 id="question-text"></h3>
     <div id="options"></div>
@@ -217,11 +223,26 @@
     const questionText = document.getElementById("question-text");
     const optionsContainer = document.getElementById("options");
 
+    // Set canvas size dynamically
+    function resizeCanvas() {
+      const maxWidth = window.innerWidth * 0.95;
+      const maxHeight = window.innerHeight * 0.95;
+      const aspectRatio = 2 / 1;
+      canvas.width = Math.min(maxWidth, 800);
+      canvas.height = canvas.width / aspectRatio;
+      if (canvas.height > maxHeight) {
+        canvas.height = maxHeight;
+        canvas.width = canvas.height * aspectRatio;
+      }
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
     // Load images
     const chefImage = new Image();
-    chefImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/chef1.png";
+    chefImage.src = "https://i.imgur.com/O8WgsRY.png";
     const trashImage = new Image();
-    trashImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/trash.png";
+    trashImage.src = "https://i.imgur.com/bOjwAZ0.png";
 
     let imagesLoaded = 0;
     const totalImages = 2;
@@ -262,22 +283,24 @@
     let obstacleSpeed = 2.5;
     let lastAnswerCorrect = false;
     let shuffledQuestions = [];
+    let lastTime = 0;
 
     const player = {
       x: 100,
-      y: 340 - 48,
+      y: 0,
       width: 48,
       height: 48,
       vy: 0,
-      gravity: 1,
-      jumpStrength: -24,
+      gravity: 1000, // Adjusted for delta-time (pixels/s^2)
+      jumpStrength: -400, // Adjusted for delta-time (pixels/s)
       grounded: true,
-      update() {
-        this.vy += this.gravity;
-        this.y += this.vy;
+      update(deltaTime) {
+        this.vy += this.gravity * deltaTime;
+        this.y += this.vy * deltaTime;
 
-        if (this.y >= 340 - this.height) {
-          this.y = 340 - this.height;
+        const groundY = canvas.height - 60 - this.height; // Ground height adjusted for canvas
+        if (this.y >= groundY) {
+          this.y = groundY;
           this.vy = 0;
           this.grounded = true;
         } else {
@@ -479,7 +502,7 @@
     function spawnObstacle() {
       obstacle = {
         x: canvas.width,
-        y: 340 - 48,
+        y: canvas.height - 60 - 48,
         width: 48,
         height: 48
       };
@@ -513,17 +536,17 @@
 
       if (currentQuestionIndex >= totalQuestions - 1 && lives > 0) {
         gameOverTitle.textContent = "Congratulations!";
-        gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/licensed.png";
+        gameOverImage.src = "https://i.imgur.com/rTUCWQu.png";
       } else {
         gameOverTitle.textContent = "Game Over!";
         if (correctQuestionsAnswered < 5) {
-          gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/not.png";
+          gameOverImage.src = "https://i.imgur.com/Oi1pPBy.png";
         } else if (correctQuestionsAnswered < 10) {
-          gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/learner.png";
+          gameOverImage.src = "https://i.imgur.com/h5Xsbsw.png";
         } else if (correctQuestionsAnswered < 15) {
-          gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/progress.png";
+          gameOverImage.src = "https://i.imgur.com/v6lsfTm.png";
         } else {
-          gameOverImage.src = "https://raw.githubusercontent.com/wizardroyal/blendrunner/main/good.png";
+          gameOverImage.src = "https://i.imgur.com/UxFittO.png";
         }
       }
 
@@ -549,6 +572,8 @@
       clearTimeout(questionTimer);
       clearTimeout(imageLoadTimeout);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      player.y = canvas.height - 60 - player.height; // Reset player position
+      lastTime = 0;
     }
 
     function downloadLicense() {
@@ -576,11 +601,11 @@
           })
           .catch(error => {
             console.error("Error downloading image:", error);
-            alert("Failed to download the image. Please check the console for details.");
+            alert("Failed to download the image. Please ensure you're connected to the internet.");
           });
       } catch (error) {
         console.error("Error initiating download:", error);
-        alert("Failed to download the image. Please check the console for details.");
+        alert("Failed to download the image. Please ensure you're connected to the internet.");
       }
     }
 
@@ -613,7 +638,9 @@
       document.getElementById("score").textContent = `0/${totalQuestions}`;
       document.getElementById("lives").textContent = lives;
       document.getElementById("start-screen").style.display = "none";
+      player.y = canvas.height - 60 - player.height; // Initialize player position
       spawnNextObstacleWithQuestion();
+      lastTime = 0;
       requestAnimationFrame(gameLoop);
     }
 
@@ -671,10 +698,10 @@
       }
     }
 
-    function updateObstacle() {
+    function updateObstacle(deltaTime) {
       if (!obstacle) return;
 
-      obstacle.x -= obstacleSpeed;
+      obstacle.x -= obstacleSpeed * deltaTime;
 
       if (!obstacleHandled && questionAnswered && lastAnswerCorrect && obstacle.x < player.x + player.width + 50 && player.grounded) {
         player.jump();
@@ -731,6 +758,7 @@
       showQuestion();
     }
 
+    // Input handling
     document.addEventListener("DOMContentLoaded", () => {
       const startBtn = document.getElementById("start-btn");
       if (startBtn) {
@@ -740,17 +768,34 @@
       }
     });
 
-    function gameLoop() {
+    // Keyboard input for jumping
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space" && gameRunning && lastAnswerCorrect) {
+        player.jump();
+      }
+    });
+
+    // Touch input for jumping
+    canvas.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      if (gameRunning && lastAnswerCorrect) {
+        player.jump();
+      }
+    });
+
+    function gameLoop(timestamp) {
       if (!gameRunning) return;
 
+      const deltaTime = Math.min((timestamp - lastTime) / 1000, 0.1); // Cap at 0.1s to avoid large jumps
+      lastTime = timestamp;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       ctx.fillStyle = "#228B22";
-      ctx.fillRect(0, 340, canvas.width, 60);
+      ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
 
-      player.update();
+      player.update(deltaTime);
       player.draw();
-      updateObstacle();
+      updateObstacle(deltaTime);
       drawObstacle();
 
       requestAnimationFrame(gameLoop);
