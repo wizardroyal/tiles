@@ -234,6 +234,16 @@
         canvas.height = maxHeight;
         canvas.width = canvas.height * aspectRatio;
       }
+      // Adjust player and obstacle positions for new canvas size
+      player.x = canvas.width * 0.125; // 100/800 original
+      player.width = canvas.width * 0.06; // 48/800
+      player.height = canvas.width * 0.06;
+      player.y = canvas.height - 60 - player.height;
+      if (obstacle) {
+        obstacle.width = canvas.width * 0.06;
+        obstacle.height = canvas.width * 0.06;
+        obstacle.y = canvas.height - 60 - obstacle.height;
+      }
     }
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
@@ -286,19 +296,19 @@
     let lastTime = 0;
 
     const player = {
-      x: 100,
+      x: canvas.width * 0.125, // 100/800
       y: 0,
-      width: 48,
-      height: 48,
+      width: canvas.width * 0.06, // 48/800
+      height: canvas.width * 0.06,
       vy: 0,
-      gravity: 1000, // Adjusted for delta-time (pixels/s^2)
-      jumpStrength: -400, // Adjusted for delta-time (pixels/s)
+      gravity: 1000, // Pixels/s^2
+      jumpStrength: -400, // Pixels/s
       grounded: true,
       update(deltaTime) {
         this.vy += this.gravity * deltaTime;
         this.y += this.vy * deltaTime;
 
-        const groundY = canvas.height - 60 - this.height; // Ground height adjusted for canvas
+        const groundY = canvas.height - 60 - this.height;
         if (this.y >= groundY) {
           this.y = groundY;
           this.vy = 0;
@@ -502,9 +512,9 @@
     function spawnObstacle() {
       obstacle = {
         x: canvas.width,
-        y: canvas.height - 60 - 48,
-        width: 48,
-        height: 48
+        y: canvas.height - 60 - canvas.width * 0.06,
+        width: canvas.width * 0.06,
+        height: canvas.width * 0.06
       };
       obstacleHandled = false;
     }
@@ -572,7 +582,10 @@
       clearTimeout(questionTimer);
       clearTimeout(imageLoadTimeout);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      player.y = canvas.height - 60 - player.height; // Reset player position
+      player.x = canvas.width * 0.125;
+      player.width = canvas.width * 0.06;
+      player.height = canvas.width * 0.06;
+      player.y = canvas.height - 60 - player.height;
       lastTime = 0;
     }
 
@@ -638,7 +651,10 @@
       document.getElementById("score").textContent = `0/${totalQuestions}`;
       document.getElementById("lives").textContent = lives;
       document.getElementById("start-screen").style.display = "none";
-      player.y = canvas.height - 60 - player.height; // Initialize player position
+      player.x = canvas.width * 0.125;
+      player.width = canvas.width * 0.06;
+      player.height = canvas.width * 0.06;
+      player.y = canvas.height - 60 - player.height;
       spawnNextObstacleWithQuestion();
       lastTime = 0;
       requestAnimationFrame(gameLoop);
@@ -698,12 +714,14 @@
       }
     }
 
-    function updateObstacle(deltaTime) {
+    function updateObstacle() {
       if (!obstacle) return;
 
-      obstacle.x -= obstacleSpeed * deltaTime;
+      obstacle.x -= obstacleSpeed;
 
-      if (!obstacleHandled && questionAnswered && lastAnswerCorrect && obstacle.x < player.x + player.width + 50 && player.grounded) {
+      // Adjust jump trigger distance for canvas size
+      if (!obstacleHandled && questionAnswered && lastAnswerCorrect && 
+          obstacle.x < player.x + player.width + canvas.width * 0.0625 && player.grounded) { // 50/800
         player.jump();
         obstacleHandled = true;
       }
@@ -786,7 +804,7 @@
     function gameLoop(timestamp) {
       if (!gameRunning) return;
 
-      const deltaTime = Math.min((timestamp - lastTime) / 1000, 0.1); // Cap at 0.1s to avoid large jumps
+      const deltaTime = Math.min((timestamp - lastTime) / 1000, 0.1); // Cap at 0.1s
       lastTime = timestamp;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -795,7 +813,7 @@
 
       player.update(deltaTime);
       player.draw();
-      updateObstacle(deltaTime);
+      updateObstacle();
       drawObstacle();
 
       requestAnimationFrame(gameLoop);
